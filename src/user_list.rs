@@ -20,11 +20,11 @@ impl UserList {
     pub fn new() -> Self {
         todo!()
     }
-    pub fn deserialize(file: &mut impl BufRead) -> Result<Self> {
+    pub fn loade(file: &mut impl BufRead) -> Result<Self> {
         todo!()
     }
     // &self or self?
-    pub fn serialize(&self) -> Result<String, serde_json::Error> {
+    pub fn save(&self) -> Result<String, serde_json::Error> {
         todo!()
     }
     pub fn insert(&mut self, user: User) {
@@ -62,12 +62,12 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize() {
+    fn test_save() {
         todo!()
     }
 
     #[test]
-    fn test_deserialize() {
+    fn test_load() {
         todo!()
     }
     #[test]

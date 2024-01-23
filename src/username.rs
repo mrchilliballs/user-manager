@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::{Error, Result};
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
@@ -6,13 +6,16 @@ use std::{fmt::Display, str::FromStr};
 #[derive(Debug, Arbitrary, Hash, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct Username(String);
 impl Username {
-    pub fn new(value: &str) -> Self {
+    pub fn build(value: &str) -> Result<Self> {
         todo!()
     }
     pub fn get(&self) -> &str {
         todo!()
     }
-    pub fn set(&mut self) {
+    pub fn set(&mut self, new_username: &str) -> Result<Self> {
+        todo!()
+    }
+    fn is_valid(string: &str) -> bool {
         todo!()
     }
 }
@@ -32,34 +35,51 @@ impl Display for Username {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_new() {
-        todo!()
+        let username = Username::build("WildSir").unwrap();
+        assert_eq!(username.0, "Wildsir");
     }
 
     #[test]
-    fn test_new_not_ascii_alphabetic() {
-        todo!()
+    fn test_is_valid() {
+        assert!(Username::is_valid("WildSir"));
+    }
+    #[test]
+    fn test_is_valid_ascii_alphanumeric() {
+        assert!(Username::is_valid("0"));
+        assert!(Username::is_valid("K"));
     }
 
     #[test]
-    fn test_new_empty() {
-        todo!()
+    fn test_is_invalid_ascii_alphanumeric() {
+        assert!(!Username::is_valid("✅"));
+        assert!(!Username::is_valid("①"));
+        assert!(!Username::is_valid(""));
+        assert!(!Username::is_valid(" "));
+        assert!(!Username::is_valid("\n"));
+        assert!(!Username::is_valid("%"));
     }
 
     #[test]
     fn test_get() {
-        todo!()
+        let username = Username::build("WildSir").unwrap();
+        assert_eq!(username.0, username.get());
     }
 
     #[test]
     fn test_set() {
-        todo!()
+        let mut username = Username::build("WildSir").unwrap();
+        username.set("Sir").unwrap();
+        assert_eq!(username.get(), "Sir")
     }
 
     #[test]
     fn test_from_str() {
-        todo!()
+        let username = Username::from_str("WildSir").unwrap();
+        assert_eq!(username.get(), "WildSir");
     }
 
     // TODO: Property based testing

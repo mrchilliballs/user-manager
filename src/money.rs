@@ -10,16 +10,16 @@ impl Money {
     pub fn new(amount: f64) -> Self {
         todo!()
     }
-    pub fn value(&self) -> f64 {
-        todo!()
-    }
-    pub fn increase(&mut self, amount: f64) {
-        todo!()
-    }
-    pub fn decrease(&mut self, amount: f64) {
+    pub fn amount(&self) -> f64 {
         todo!()
     }
     pub fn set(&mut self, amount: f64) {
+        todo!()
+    }
+    pub fn withdraw(&mut self, amount: f64) {
+        todo!()
+    }
+    pub fn deposit(&mut self, amount: f64) {
         todo!()
     }
 }
@@ -38,38 +38,50 @@ impl Display for Money {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_new() {
-        todo!()
+        let money = Money::new(10.0);
+        assert_eq!(money.0, 10.0);
     }
     #[test]
-    fn test_value() {
-        todo!()
-    }
-
-    #[test]
-    fn test_increase() {
-        todo!()
-    }
-
-    #[test]
-    fn test_decrease() {
-        todo!()
+    fn test_amount() {
+        let money = Money::new(10.0);
+        assert_eq!(money.0, money.amount());
     }
 
     #[test]
     fn test_set() {
-        todo!()
+        let mut money = Money::new(5.0);
+        money.set(10.0);
+        assert_eq!(money.amount(), 10.0);
+    }
+
+    #[test]
+    fn test_deposit() {
+        let mut money = Money::new(5.0);
+        money.deposit(5.0);
+        assert_eq!(money.amount(), 10.0);
+    }
+
+    #[test]
+    fn test_withdraw() {
+        let mut money = Money::new(15.0);
+        money.withdraw(5.0);
+        assert_eq!(money.amount(), 10.0);
     }
 
     #[test]
     fn test_from_f64() {
-        todo!()
+        let money: Money = 10.0.into();
+        assert_eq!(money.amount(), 10.0);
     }
 
     #[test]
     fn test_display() {
-        todo!()
+        let money = Money::new(10.0);
+        assert_eq!(money.to_string(), "10.00");
     }
 
     // TODO: Property-based testing
