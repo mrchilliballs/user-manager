@@ -18,6 +18,9 @@ impl Username {
     fn is_valid(string: &str) -> bool {
         todo!()
     }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl FromStr for Username {
@@ -73,13 +76,13 @@ mod tests {
     fn test_set() {
         let mut username = Username::build("WildSir").unwrap();
         username.set("Sir").unwrap();
-        assert_eq!(username.get(), "Sir")
+        assert_eq!(username.as_str(), "Sir")
     }
 
     #[test]
     fn test_from_str() {
         let username = Username::from_str("WildSir").unwrap();
-        assert_eq!(username.get(), "WildSir");
+        assert_eq!(username.as_str(), "WildSir");
     }
 
     // TODO: Property based testing

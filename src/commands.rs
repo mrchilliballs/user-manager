@@ -4,11 +4,6 @@ use crate::username::Username;
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    Add {
-        username: Username,
-        name: String,
-        money: f64,
-    },
     Insert {
         username: Username,
         name: String,
