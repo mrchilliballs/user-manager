@@ -36,9 +36,6 @@ impl Cli {
     }
 }
 
-fn add(users: &mut UserList, username: &Username, name: &str, money: f64) {
-    todo!()
-}
 fn insert(users: &mut UserList, username: &Username, name: &str, money: f64) {
     todo!()
 }
