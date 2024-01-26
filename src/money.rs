@@ -41,6 +41,11 @@ impl PartialEq for Money {
         self.val() == other.val()
     }
 }
+impl PartialEq<f64> for Money {
+    fn eq(&self, other: &f64) -> bool {
+        self.val() == *other
+    }
+}
 impl Eq for Money {}
 
 #[cfg(test)]

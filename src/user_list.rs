@@ -55,8 +55,9 @@ impl Display for UserList {
     }
 }
 
+// Destructure instead of using .1 and .0 all the time
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::{
         io::{Cursor, Read},
         str::FromStr,
@@ -64,7 +65,7 @@ mod tests {
 
     use super::*;
 
-    fn example_user_list() -> UserList {
+    pub fn example_user_list() -> UserList {
         let mut map = HashMap::new();
         let user1 = example_user_1();
         let user2 = example_user_2();
@@ -73,7 +74,7 @@ mod tests {
         UserList { users: map.into() }
     }
 
-    fn example_user_1() -> (Username, User) {
+    pub fn example_user_1() -> (Username, User) {
         (
             Username::from_str("WildSir").unwrap(),
             User {
@@ -82,7 +83,7 @@ mod tests {
             },
         )
     }
-    fn example_user_2() -> (Username, User) {
+    pub fn example_user_2() -> (Username, User) {
         (
             Username::from_str("Sir").unwrap(),
             User {
@@ -91,7 +92,7 @@ mod tests {
             },
         )
     }
-    fn example_user_3() -> (Username, User) {
+    pub fn example_user_3() -> (Username, User) {
         (
             Username::from_str("Wild").unwrap(),
             User {
