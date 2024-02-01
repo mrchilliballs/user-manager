@@ -38,6 +38,9 @@ impl UserList {
     pub fn get(&self, username: &Username) -> Option<User> {
         todo!()
     }
+    pub fn get_mut(&mut self, username: &Username) -> Option<&mut User> {
+        todo!()
+    }
     pub fn get_all(&self) -> &HashMap<Username, User> {
         todo!()
     }
@@ -113,6 +116,13 @@ pub(crate) mod tests {
         let users = example_user_list();
         let username: Username = "WildSir".parse().unwrap();
         assert_eq!(users.get(&username).unwrap(), example_user_1().1);
+    }
+
+    #[test]
+    fn test_get_mut() {
+        let mut users = example_user_list();
+        let username: Username = "WildSir".parse().unwrap();
+        assert_eq!(users.get_mut(&username).unwrap(), &mut example_user_1().1);
     }
 
     #[test]

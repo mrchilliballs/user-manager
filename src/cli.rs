@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::{commands::Command, user_list::UserList};
+use crate::{command::Command, user_list::UserList};
 
 #[derive(Debug, Parser)]
 #[command(about = "A CLI to manage users", long_about = None)]
