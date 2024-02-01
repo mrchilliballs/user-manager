@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Deref, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -8,38 +8,38 @@ pub struct Money(f64);
 
 impl Money {
     pub fn new(amount: f64) -> Self {
-        todo!()
+        Money(amount)
     }
     pub fn val(&self) -> f64 {
-        todo!()
+        self.0
     }
     pub fn set(&mut self, amount: f64) {
-        todo!()
+        self.0 = amount
     }
     pub fn withdraw(&mut self, amount: f64) {
-        todo!()
+        self.0 -= amount;
     }
     pub fn deposit(&mut self, amount: f64) {
-        todo!()
+        self.0 += amount;
     }
 }
 
 impl From<f64> for Money {
     fn from(value: f64) -> Self {
-        todo!()
+        Money(value)
     }
 }
 
 impl FromStr for Money {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse()
+        Ok(Money::from(s.parse::<f64>()?))
     }
 }
 
 impl Display for Money {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "${:.2}", self.0)
     }
 }
 
@@ -92,6 +92,12 @@ mod tests {
     }
 
     #[test]
+    fn test_from_str() {
+        let money_str = "100.50";
+        assert!(Money::from_str(money_str).is_ok());
+    }
+
+    #[test]
     fn test_from_f64() {
         let money: Money = 10.0.into();
         assert_eq!(money.val(), 10.0);
@@ -105,10 +111,18 @@ mod tests {
 
     #[test]
     fn test_partial_eq() {
-        let money1 = Money::new(10.00);
-        let money2 = Money::new(10.00);
+        let money1 = Money::new(10.0);
+        let money2 = Money::new(10.0);
 
-        assert!(money1.val() == money2.val());
+        assert!(money1 == money2);
+    }
+
+    #[test]
+    fn test_partial_eq_f64() {
+        let money = Money::new(10.0);
+        let money_float = 10.0;
+
+        assert!(money == money_float);
     }
 
     // TODO: Property-based testing
