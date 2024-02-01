@@ -1,5 +1,5 @@
 mod cli;
-mod commands;
+mod command;
 mod money;
 mod user;
 mod user_list;

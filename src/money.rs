@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Deref};
+use std::{fmt::Display, ops::Deref, str::FromStr};
 
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,13 @@ impl Money {
 impl From<f64> for Money {
     fn from(value: f64) -> Self {
         todo!()
+    }
+}
+
+impl FromStr for Money {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse()
     }
 }
 
