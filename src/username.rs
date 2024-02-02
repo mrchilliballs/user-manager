@@ -2,21 +2,37 @@ use anyhow::{Error, Result};
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
+use thiserror::Error;
+
+use crate::user::User;
+
+#[derive(Error, Debug)]
+#[error("invalid username: must not be empty and must only contain ASCII-alphanumeric characters")]
+pub struct UsernameError;
 
 #[derive(Debug, Arbitrary, Hash, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct Username(String);
 impl Username {
-    pub fn build(value: &str) -> Result<Self> {
-        todo!()
+    pub fn build(username: &str) -> Result<Self, UsernameError> {
+        if Self::is_valid(username) {
+            Ok(Username(username.to_string()))
+        } else {
+            Err(UsernameError)
+        }
     }
     pub fn get(&self) -> &str {
-        todo!()
+        &self.0
     }
-    pub fn set(&mut self, new_username: &str) -> Result<Self> {
-        todo!()
+    pub fn set(&mut self, new_username: &str) -> Result<(), UsernameError> {
+        if Self::is_valid(new_username) {
+            self.0 = new_username.to_string();
+            Ok(())
+        } else {
+            Err(UsernameError)
+        }
     }
-    fn is_valid(string: &str) -> bool {
-        todo!()
+    pub fn is_valid(candidate: &str) -> bool {
+        candidate.chars().all(|c| c.is_ascii_alphanumeric()) && !candidate.is_empty()
     }
     pub fn as_str(&self) -> &str {
         &self.0
@@ -24,15 +40,15 @@ impl Username {
 }
 
 impl FromStr for Username {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+    type Err = UsernameError;
+    fn from_str(candiate: &str) -> Result<Self, Self::Err> {
+        Username::build(candiate)
     }
 }
 
 impl Display for Username {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "{}", self.0)
     }
 }
 
@@ -43,7 +59,7 @@ mod tests {
     #[test]
     fn test_new() {
         let username = Username::build("WildSir").unwrap();
-        assert_eq!(username.0, "Wildsir");
+        assert_eq!(username.0, "WildSir");
     }
 
     #[test]
@@ -83,6 +99,12 @@ mod tests {
     fn test_from_str() {
         let username = Username::from_str("WildSir").unwrap();
         assert_eq!(username.as_str(), "WildSir");
+    }
+
+    #[test]
+    fn test_display() {
+        let username = Username::from_str("WildSir").unwrap();
+        assert_eq!(username.to_string(), username.get());
     }
 
     // TODO: Property based testing
