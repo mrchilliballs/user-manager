@@ -14,6 +14,7 @@ pub struct User {
 }
 
 impl Display for User {
+    /// Formatted as "{name} | ${money}". Money is rounded to the nearest hundreth.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.name.is_empty() {
             write!(f, "Unnamed User | {}", self.money)

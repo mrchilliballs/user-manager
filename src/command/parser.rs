@@ -2,8 +2,6 @@ use super::logger::Logger;
 use crate::command::Command;
 use crate::user_list::UserList;
 
-use std::io::prelude::*;
-
 #[derive(Debug, PartialEq)]
 pub struct CommandParser<'a, T>
 where

@@ -11,29 +11,35 @@ use serde::{Deserialize, Serialize};
 
 use anyhow::Result;
 
+/// Holds a list of users identified by usernames. No duplicates are held.
 #[derive(Deserialize, Serialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone)]
 pub struct UserList {
     users: BTreeMap<Username, User>,
 }
 
 impl UserList {
+    /// Creates an empty UserList.
     pub fn new() -> Self {
         Self::default()
     }
     // Maybe: Replace with BufReader and generics for Read
+    /// Loads a UserList from JSON.
     pub fn load(reader: &mut impl BufRead) -> Result<Self, serde_json::Error> {
         serde_json::from_reader(reader)
     }
     // &self or self?
     // Maybe: Replace with BufReader and generics for Read
-    pub fn save(&self, writer: &mut (impl Write + std::fmt::Debug)) -> Result<(), anyhow::Error> {
+    /// Parses UserList to JSON.
+    pub fn save(&self, writer: &mut impl Write) -> Result<(), anyhow::Error> {
         let mut buf_writer = BufWriter::new(writer);
         serde_json::to_writer(&mut buf_writer, self)?;
         Ok(())
     }
+    /// Inserts a new entry to UserList, overwriting any entries with the same username.
     pub fn insert(&mut self, username: Username, user: User) {
         self.users.insert(username, user);
     }
+    /// Adds a new entry to UserList, returning None if an entry already exists.
     pub fn add(&mut self, username: Username, user: User) -> Option<()> {
         if !self.users.contains_key(&username) {
             self.insert(username, user);
@@ -42,21 +48,32 @@ impl UserList {
             None
         }
     }
+    /// Gets a user from UserList, returning None if it does not exist.
     pub fn get(&self, username: &Username) -> Option<&User> {
         self.users.get(username)
     }
+    /// Gets a mutable reference to a user in UserList, returning None if it does not exist.
     pub fn get_mut(&mut self, username: &Username) -> Option<&mut User> {
         self.users.get_mut(username)
     }
+    /// Gets all users from UserList.
     pub fn get_all(&self) -> &BTreeMap<Username, User> {
         &self.users
     }
+    /// Removes a user permanently, and returns the removed user. It returns None if it does not exist.
     pub fn remove(&mut self, username: &Username) -> Option<User> {
         self.users.remove(username)
     }
 }
 
 impl Display for UserList {
+    /// Will display user sorted in the format "({username}): {user}", with new users separated by newlines.
+    /// # Examples
+    /// ```
+    /// (JoeD): John Doe | $0.00
+    /// (WildSir): Wild Sir | $10.00
+    /// (Zach): Zachary Johnson | $100.000
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut iter = self.get_all().iter().peekable();
         while let Some((username, user)) = iter.next() {

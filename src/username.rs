@@ -1,18 +1,18 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 use thiserror::Error;
 
-use crate::user::User;
-
 #[derive(Error, Debug)]
 #[error("invalid username: must not be empty and must only contain ASCII-alphanumeric characters")]
 pub struct UsernameError;
 
+/// Usernames can only hold ASCII-alphanumeric characters and must not be empty.
 #[derive(Debug, Arbitrary, Hash, PartialEq, Eq, Serialize, Deserialize, Clone, PartialOrd, Ord)]
 pub struct Username(String);
 impl Username {
+    /// Will fail if provided username is not valid.
     pub fn build(username: &str) -> Result<Self, UsernameError> {
         if Self::is_valid(username) {
             Ok(Username(username.to_string()))
@@ -20,9 +20,11 @@ impl Username {
             Err(UsernameError)
         }
     }
+    /// Gets the username.
     pub fn get(&self) -> &str {
         &self.0
     }
+    /// Sets the username to a value. The value must be a valid username.
     pub fn set(&mut self, new_username: &str) -> Result<(), UsernameError> {
         if Self::is_valid(new_username) {
             self.0 = new_username.to_string();
@@ -31,6 +33,7 @@ impl Username {
             Err(UsernameError)
         }
     }
+    /// Checks if a value is ASCII-alphanumeric and is not empty.
     pub fn is_valid(candidate: &str) -> bool {
         candidate.chars().all(|c| c.is_ascii_alphanumeric()) && !candidate.is_empty()
     }
@@ -41,14 +44,16 @@ impl Username {
 
 impl FromStr for Username {
     type Err = UsernameError;
+    /// Candidate must be ASCII-alphanumeric and must not be empty.
     fn from_str(candiate: &str) -> Result<Self, Self::Err> {
         Username::build(candiate)
     }
 }
 
 impl Display for Username {
+    /// Simply displays the username.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.get())
     }
 }
 

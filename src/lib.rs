@@ -1,6 +1,9 @@
 mod cli;
 mod command;
-mod money;
-mod user;
-mod user_list;
-mod username;
+pub mod money;
+pub mod user;
+pub mod user_list;
+pub mod username;
+
+pub use user::User;
+pub use user_list::UserList;
