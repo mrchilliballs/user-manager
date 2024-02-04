@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::io::prelude::*;
+use std::io::{prelude::*, BufWriter};
 
 use crate::user::User;
 use crate::username::Username;
@@ -13,48 +13,59 @@ use anyhow::Result;
 
 #[derive(Deserialize, Serialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone)]
 pub struct UserList {
-    users: HashMap<Username, User>,
+    users: BTreeMap<Username, User>,
 }
 
 impl UserList {
     pub fn new() -> Self {
-        todo!()
+        Self::default()
     }
     // Maybe: Replace with BufReader and generics for Read
-    pub fn load(reader: &impl Read) -> Result<Self> {
-        todo!()
+    pub fn load(reader: &mut impl BufRead) -> Result<Self, serde_json::Error> {
+        serde_json::from_reader(reader)
     }
     // &self or self?
     // Maybe: Replace with BufReader and generics for Read
-    pub fn save(&self, writer: &impl Write) -> Result<String, serde_json::Error> {
-        todo!()
+    pub fn save(&self, writer: &mut (impl Write + std::fmt::Debug)) -> Result<(), anyhow::Error> {
+        let mut buf_writer = BufWriter::new(writer);
+        serde_json::to_writer(&mut buf_writer, self)?;
+        Ok(())
     }
     pub fn insert(&mut self, username: Username, user: User) {
-        todo!()
+        self.users.insert(username, user);
     }
-    pub fn add(&mut self, user: User) -> Option<()> {
-        todo!()
+    pub fn add(&mut self, username: Username, user: User) -> Option<()> {
+        if !self.users.contains_key(&username) {
+            self.insert(username, user);
+            Some(())
+        } else {
+            None
+        }
     }
-    pub fn get(&self, username: &Username) -> Option<User> {
-        todo!()
+    pub fn get(&self, username: &Username) -> Option<&User> {
+        self.users.get(username)
     }
     pub fn get_mut(&mut self, username: &Username) -> Option<&mut User> {
-        todo!()
+        self.users.get_mut(username)
     }
-    pub fn get_all(&self) -> &HashMap<Username, User> {
-        todo!()
+    pub fn get_all(&self) -> &BTreeMap<Username, User> {
+        &self.users
     }
     pub fn remove(&mut self, username: &Username) -> Option<User> {
-        todo!()
-    }
-    pub fn replace(&mut self, username: &Username, user: User) -> Option<User> {
-        todo!()
+        self.users.remove(username)
     }
 }
 
 impl Display for UserList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        let mut iter = self.get_all().iter().peekable();
+        while let Some((username, user)) = iter.next() {
+            write!(f, "({username}) {user}")?;
+            if iter.peek().is_some() {
+                writeln!(f)?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -66,10 +77,12 @@ pub(crate) mod tests {
         str::FromStr,
     };
 
+    use crate::money::Money;
+
     use super::*;
 
     pub fn example_user_list() -> UserList {
-        let mut map = HashMap::new();
+        let mut map = BTreeMap::new();
         let user1 = example_user_1();
         let user2 = example_user_2();
         map.insert(user1.0, user1.1);
@@ -108,14 +121,14 @@ pub(crate) mod tests {
     #[test]
     fn test_new() {
         let users = UserList::new();
-        assert_eq!(users.users, HashMap::new());
+        assert_eq!(users, UserList::default());
     }
 
     #[test]
     fn test_get() {
         let users = example_user_list();
         let username: Username = "WildSir".parse().unwrap();
-        assert_eq!(users.get(&username).unwrap(), example_user_1().1);
+        assert_eq!(users.get(&username).unwrap(), &example_user_1().1);
     }
 
     #[test]
@@ -130,7 +143,27 @@ pub(crate) mod tests {
         let mut user_list = example_user_list();
         let user = example_user_3();
         user_list.insert(user.0.clone(), example_user_3().1);
-        assert_eq!(user_list.get(&user.0).unwrap(), user.1);
+        assert_eq!(user_list.get(&user.0).unwrap(), &user.1);
+    }
+
+    #[test]
+    fn test_add_normal() {
+        let mut user_list = example_user_list();
+        let user = example_user_3();
+        user_list.add(user.0.clone(), example_user_3().1);
+        assert_eq!(user_list.get(&user.0).unwrap(), &user.1);
+    }
+
+    #[test]
+    fn test_add_existing() {
+        let mut user_list = example_user_list();
+        let mut user = example_user_1();
+        user.1 = User {
+            name: String::from("Sir"),
+            money: Money::new(0.0),
+        };
+        user_list.add(user.0.clone(), user.1.clone());
+        assert_ne!(user_list.get(&user.0).unwrap(), &user.1);
     }
 
     #[test]
@@ -139,8 +172,8 @@ pub(crate) mod tests {
         let mut user = example_user_1();
         user.1.name = String::from("Mr. WildSir");
         user_list.insert(user.0.clone(), user.1.clone());
-        assert_eq!(user_list.get(&user.0).unwrap(), user.1);
-        assert_ne!(user_list.get(&user.0).unwrap(), example_user_1().1);
+        assert_eq!(user_list.get(&user.0).unwrap(), &user.1);
+        assert_ne!(user_list.get(&user.0).unwrap(), &example_user_1().1);
     }
 
     #[test]
@@ -167,6 +200,8 @@ pub(crate) mod tests {
 
         user_list.save(&mut cursor).unwrap();
 
+        cursor.set_position(0);
+
         let mut string = String::new();
         cursor.read_to_string(&mut string).unwrap();
 
@@ -180,7 +215,7 @@ pub(crate) mod tests {
 
         assert_eq!(
             expected_user_list,
-            UserList::load(&contents.as_bytes()).unwrap()
+            UserList::load(&mut contents.as_bytes()).unwrap()
         );
     }
 
@@ -188,11 +223,12 @@ pub(crate) mod tests {
     fn test_display() {
         let user_list = example_user_list();
         let expected_string = "\
-         (WildSir) Wild Sir | $0.00
-         (Sir) Sir | $10.00
-         (Wild) Wild | $10.00";
+(Sir) Sir | $10.00
+(WildSir) Wild Sir | $0.00";
 
-        assert_eq!(user_list.to_string(), expected_string);
+        assert!(
+            user_list.to_string() == expected_string || user_list.to_string() == expected_string
+        );
     }
 
     // TODO: Property based testing

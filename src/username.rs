@@ -10,7 +10,7 @@ use crate::user::User;
 #[error("invalid username: must not be empty and must only contain ASCII-alphanumeric characters")]
 pub struct UsernameError;
 
-#[derive(Debug, Arbitrary, Hash, PartialEq, Eq, Serialize, Deserialize, Clone)]
+#[derive(Debug, Arbitrary, Hash, PartialEq, Eq, Serialize, Deserialize, Clone, PartialOrd, Ord)]
 pub struct Username(String);
 impl Username {
     pub fn build(username: &str) -> Result<Self, UsernameError> {
