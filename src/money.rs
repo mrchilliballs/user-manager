@@ -3,22 +3,32 @@ use std::{fmt::Display, str::FromStr};
 use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 
+/// Wrapper of f64 used for holding money with basic methods provided.
 #[derive(Serialize, Deserialize, Debug, Default, Arbitrary, Clone, Copy)]
 pub struct Money(f64);
 
 impl Money {
+    /// Creates an instance of Money holding `amount`.
     pub fn new(amount: f64) -> Self {
         Money(amount)
     }
+    /// Returns the amount of money.
     pub fn val(&self) -> f64 {
         self.0
     }
+    /// Sets the amount of money.
     pub fn set(&mut self, amount: f64) {
         self.0 = amount
     }
+    /// Withdraws (subtracts) the amount from the money.
+    /// # Panics
+    /// * Will panic if computation overflows.
     pub fn withdraw(&mut self, amount: f64) {
         self.0 -= amount;
     }
+    /// Deposits (adds) the amount to the money.
+    /// # Panics
+    /// * Will panic if computation overflows.
     pub fn deposit(&mut self, amount: f64) {
         self.0 += amount;
     }
@@ -38,6 +48,10 @@ impl FromStr for Money {
 }
 
 impl Display for Money {
+    /// Displays the money followed by a dollar sign and round to the nearest tenth.
+    /// Examples:
+    /// `$100.00`
+    /// `$99.99`
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "${:.2}", self.0)
     }
