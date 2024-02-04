@@ -1,3 +1,5 @@
+//! # User Manager
+//! `user-manger` provides utilities to manage users and a fully featured CLI.
 mod cli;
 mod command;
 pub mod money;

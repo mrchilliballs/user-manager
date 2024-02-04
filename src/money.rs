@@ -35,8 +35,9 @@ impl Money {
 }
 
 impl From<f64> for Money {
+    /// Creates a new instance of money holding the value.
     fn from(value: f64) -> Self {
-        Money(value)
+        Money::new(value)
     }
 }
 
