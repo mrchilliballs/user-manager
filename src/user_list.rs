@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use anyhow::Result;
 
-/// Holds a list of users identified by usernames. No duplicates are held.
+/// Holds a list of users identified by usernames. No duplicates are held and entries are sorted.
 #[derive(Deserialize, Serialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone)]
 pub struct UserList {
     users: BTreeMap<Username, User>,
