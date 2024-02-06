@@ -282,6 +282,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mockall_double"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1ca96e5ac35256ae3e13536edd39b172b88f41615e1d7b653c8ad24524113e8"
+dependencies = [
+ "cfg-if",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -529,13 +541,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "temp"
-version = "0.1.0"
-dependencies = [
- "dialoguer",
-]
-
-[[package]]
 name = "tempfile"
 version = "3.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -598,8 +603,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "console",
  "dialoguer",
  "mockall",
+ "mockall_double",
  "proptest",
  "proptest-derive",
  "serde",

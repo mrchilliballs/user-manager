@@ -1,36 +1,60 @@
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::io::{prelude::*, BufWriter};
+use std::fs::File;
+use std::io::{self, prelude::*, BufWriter};
+use std::path::{Path, PathBuf};
 
 use crate::user::User;
 use crate::username::Username;
 
+#[cfg(test)]
+use mockall::mock;
 use proptest_derive::Arbitrary;
 
 use serde::{Deserialize, Serialize};
 
 use anyhow::Result;
 
+// #[cfg(test)]
+// use mockall::mock;
 /// Holds a list of users identified by usernames. No duplicates are held and entries are sorted.
 #[derive(Deserialize, Serialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone)]
 pub struct UserList {
     users: BTreeMap<Username, User>,
+    // TEST THIS
+    save_location: Option<PathBuf>,
 }
 
 impl UserList {
     /// Creates an empty UserList.
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(save_location: Option<PathBuf>) -> Self {
+        Self {
+            save_location,
+            users: BTreeMap::new(),
+        }
     }
     // Maybe: Replace with BufReader and generics for Read
-    /// Loads a UserList from JSON.
-    pub fn load(reader: &mut impl BufRead) -> Result<Self, serde_json::Error> {
-        serde_json::from_reader(reader)
+    /// Loads a UserList from JSON. If provided, will save to the provided file path.
+    pub fn load(reader: &mut impl BufRead, file_path: Option<PathBuf>) -> Result<Self, io::Error> {
+        let mut users: UserList =
+            serde_json::from_reader(reader).map_err(Into::<io::Error>::into)?;
+        // TEST THIS
+        if let None = users.save_location {
+            users.save_location = file_path;
+        }
+        Ok(users)
     }
     // &self or self?
     // Maybe: Replace with BufReader and generics for Read
     /// Parses UserList to JSON.
-    pub fn save(&self, writer: &mut impl Write) -> Result<(), anyhow::Error> {
+    pub fn save(
+        &mut self,
+        writer: &mut impl Write,
+        file_path: Option<PathBuf>,
+    ) -> Result<(), io::Error> {
+        if let None = self.save_location {
+            self.save_location = file_path;
+        }
         let mut buf_writer = BufWriter::new(writer);
         serde_json::to_writer(&mut buf_writer, self)?;
         Ok(())
@@ -85,10 +109,59 @@ impl Display for UserList {
         Ok(())
     }
 }
+impl Drop for UserList {
+    fn drop(&mut self) {
+        let save_location = if let Some(save_location) = self.save_location.clone() {
+            save_location
+        } else {
+            return;
+        };
+        let save_loc_str = save_location
+            .as_os_str()
+            .to_str()
+            .unwrap_or("(path is not valid UTF-8; cannot be displayed)");
+        let file = match File::options().write(true).open(&save_location) {
+            Ok(file) => file,
+            Err(err) => {
+                eprintln!(
+                    "Failed to save to \"{}\" because of error: {}",
+                    save_loc_str, err
+                );
+                return;
+            }
+        };
+        let mut buf = BufWriter::new(file);
+        if let Err(err) = self.save(&mut buf, None) {
+            eprintln!(
+                "Failed to write to file \"{}\" because of error: {}",
+                save_loc_str, err
+            );
+            return;
+        }
+    }
+}
+#[cfg(test)]
+mock! {
+    #[derive(Debug)]
+    pub UserList {
+        pub fn new(save_location: Option<PathBuf>) -> Self;
+        pub fn load<T: 'static + BufRead>(reader: &mut T) -> Result<Self, serde_json::Error>;
+        pub fn save<T: 'static + Write>(&self, writer: &mut T) -> Result<(), serde_json::Error>;
+        pub fn insert(&mut self, username: Username, user: User);
+        pub fn add(&mut self, username: Username, user: User) -> Option<()>;
+        pub fn get(&self, username: &Username) -> Option<&'static User>;
+        pub fn get_mut(&mut self, username: &Username) -> Option<&'static mut User>;
+        pub fn get_all(&self) -> &'static BTreeMap<Username, User>;
+        pub fn remove(&mut self, username: &Username) -> Option<User>;
+    }
+    impl PartialEq for UserList {
+        fn eq(&self, other: &Self) -> bool;
+    }
+}
 
 // Destructure instead of using .1 and .0 all the time
 #[cfg(test)]
-pub(crate) mod tests {
+mod tests {
     use std::{
         io::{Cursor, Read},
         str::FromStr,
@@ -104,7 +177,10 @@ pub(crate) mod tests {
         let user2 = example_user_2();
         map.insert(user1.0, user1.1);
         map.insert(user2.0, user2.1);
-        UserList { users: map.into() }
+        UserList {
+            users: map.into(),
+            save_location: None,
+        }
     }
 
     pub fn example_user_1() -> (Username, User) {
@@ -137,8 +213,9 @@ pub(crate) mod tests {
 
     #[test]
     fn test_new() {
-        let users = UserList::new();
-        assert_eq!(users, UserList::default());
+        // let users = UserList::new(None);
+        // assert_eq!(users, UserList::default());
+        todo!()
     }
 
     #[test]
@@ -210,30 +287,36 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn test_drop() {
+        todo!()
+    }
+    #[test]
     fn test_save() {
-        let user_list = example_user_list();
-        let expected_contents = serde_json::to_string(&user_list).unwrap();
-        let mut cursor = Cursor::new(vec![]);
+        // let user_list = example_user_list();
+        // let expected_contents = serde_json::to_string(&user_list).unwrap();
+        // let mut cursor = Cursor::new(vec![]);
 
-        user_list.save(&mut cursor).unwrap();
+        // user_list.save(&mut cursor).unwrap();
 
-        cursor.set_position(0);
+        // cursor.set_position(0);
 
-        let mut string = String::new();
-        cursor.read_to_string(&mut string).unwrap();
+        // let mut string = String::new();
+        // cursor.read_to_string(&mut string).unwrap();
 
-        assert_eq!(string, expected_contents);
+        // assert_eq!(string, expected_contents);
+        todo!()
     }
 
     #[test]
     fn test_load() {
-        let expected_user_list = example_user_list();
-        let contents = serde_json::to_string(&expected_user_list).unwrap();
+        // let expected_user_list = example_user_list();
+        // let contents = serde_json::to_string(&expected_user_list).unwrap();
 
-        assert_eq!(
-            expected_user_list,
-            UserList::load(&mut contents.as_bytes()).unwrap()
-        );
+        // assert_eq!(
+        //     expected_user_list,
+        //     UserList::load(&mut contents.as_bytes()).unwrap()
+        // );
+        todo!()
     }
 
     #[test]

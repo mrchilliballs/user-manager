@@ -1,15 +1,16 @@
-use crate::{money::Money, username::Username};
+use crate::{money::Money, username::Username, User};
 use clap::{ArgGroup, Subcommand};
 
-mod logger;
-mod parser;
+pub mod logger;
+pub mod parser;
+pub use logger::Logger;
 
-#[derive(Debug, Subcommand, PartialEq)]
+#[derive(Debug, Subcommand, PartialEq, Clone)]
 pub enum Command {
     Insert {
         username: Username,
-        name: String,
-        money: Money,
+        #[command(flatten)]
+        user: User,
     },
     #[clap(group(
         ArgGroup::new("editables")
@@ -19,8 +20,8 @@ pub enum Command {
     ))]
     Edit {
         username: Username,
-        name: Option<String>,
-        money: Option<Money>,
+        #[command(flatten)]
+        user: Option<User>,
     },
     Get,
     Withdraw {
