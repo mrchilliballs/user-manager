@@ -1,5 +1,6 @@
 use super::logger::Logger;
 use crate::command::Command;
+#[cfg_attr(test, mockall_double::double)]
 use crate::user_list::UserList;
 
 #[derive(Debug, PartialEq)]
@@ -7,7 +8,7 @@ pub struct CommandParser<'a, T>
 where
     T: Logger,
 {
-    command: &'a Command,
+    command: Command,
     users: &'a mut UserList,
     logger: &'a T,
 }
@@ -17,196 +18,97 @@ where
     T: Logger,
 {
     pub fn new(
-        command: &'a Command,
+        command: Command,
         users: &'a mut UserList,
         logger: &'a T,
         // Normally a file
     ) -> Self {
-        todo!()
+        CommandParser {
+            command,
+            users,
+            logger,
+        }
     }
     pub fn parse(self) {
-        todo!()
+        match &self.command {
+            Command::Insert { .. } => self.insert(),
+            Command::Edit { .. } => self.edit(),
+            Command::Get => self.get(),
+            Command::Withdraw { .. } => self.withdraw(),
+            Command::Deposit { .. } => self.deposit(),
+            Command::Transfer { .. } => self.transfer(),
+            Command::Delete { .. } => self.delete(),
+        }
     }
     // user_list.insert(...)
-    fn insert(&mut self) {
-        todo!()
+    pub fn insert(self) {
+        if let Command::Insert { username, user } = self.command {
+            self.users.insert(username, user);
+            self.logger.println("Sucessfully inserted user.");
+        } else {
+            panic!("insert was called with wrong command variant");
+        }
     }
     // user_list.get_mut(...)
-    fn edit(&mut self) {
+    fn edit(self) {
         todo!()
     }
     // user_list.get(...)
-    fn get(&mut self) {
+    fn get(self) {
         todo!()
     }
     // user_list.get(...)
-    fn withdraw(&mut self) {
+    fn withdraw(self) {
         todo!()
     }
     // user_list.deposit(...)
-    fn deposit(&mut self) {
+    fn deposit(self) {
         todo!()
     }
     // user_list.deposit(...)
-    fn transfer(&mut self) {
+    fn transfer(self) {
         todo!()
     }
     // user_list.delete(...)
-    fn delete(&mut self) {
+    fn delete(self) {
         todo!()
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use std::str::FromStr;
+#[cfg(test)]
+mod tests {
+    // Notes: Do mocking expects before running the actual code being tested.
 
-//     use crate::{money::Money, user, username::Username};
+    use super::*;
+    use crate::command::logger::MockLogger;
 
-//     use super::*;
-
-//     #[derive(Debug, Default, PartialEq)]
-//     struct DummyLogger(String);
-//     impl Logger for DummyLogger {
-//         fn print(&mut self, value: &str) {
-//             self.0.push_str(value);
-//         }
-//     }
-//     struct CmdParserHelper {
-//         command: Command,
-//         users: UserList,
-//         logger: DummyLogger,
-//     }
-//     impl CmdParserHelper {
-//         fn new(command: Command) -> Self {
-//             let users = UserList::default();
-//             let logger = DummyLogger::default();
-//             CmdParserHelper {
-//                 command,
-//                 users,
-//                 logger,
-//             }
-//         }
-//         fn command(&self) -> &Command {
-//             &self.command
-//         }
-//         fn users(&mut self) -> &mut UserList {
-//             &mut self.users
-//         }
-//         fn logger(&self) -> &DummyLogger {
-//             &self.logger
-//         }
-//         fn parser(&mut self) -> CommandParser<DummyLogger> {
-//             CommandParser {
-//                 command: &self.command,
-//                 users: &mut self.users,
-//                 logger: &mut self.logger,
-//             }
-//         }
-//     }
-
-//     fn test_user() -> (Username, String, Money) {
-//         (
-//             Username::from_str("Sir").unwrap(),
-//             String::from("Sir"),
-//             Money::from(10.0),
-//         )
-//     }
-
-//     #[test]
-//     fn test_logger_default_impl() {
-//         let mut logger = DummyLogger::default();
-//         logger.println("This is a test!");
-
-//         assert_eq!(logger.0, "This is a test!\n");
-//     }
-
-//     #[test]
-//     fn test_parser_new() {
-//         let mut helper = CmdParserHelper::new(Command::Get);
-
-//         let (mut user1, mut user2) = (helper.users().clone(), helper.users().clone());
-
-//         let parser = CommandParser::new(helper.command(), &mut user1, helper.logger());
-//         let expected_parser = CommandParser {
-//             command: helper.command(),
-//             users: &mut user2,
-//             logger: helper.logger(),
-//         };
-
-//         assert_eq!(parser, expected_parser);
-//     }
-
-//     #[test]
-//     fn test_insert_user() {
-//         let (username, name, money) = test_user();
-//         let mut helper = CmdParserHelper::new(Command::Insert {
-//             username,
-//             name,
-//             money,
-//         });
-//         let mut parser = helper.parser();
-
-//         parser.insert();
-
-//         assert_eq!(helper.logger().0, "Sucessfully inserted user.")
-//     }
-
-//     #[test]
-//     fn test_edit_none() {
-//         let username = test_user().0;
-//         let mut helper = CmdParserHelper::new(Command::Edit {
-//             username,
-//             name: None,
-//             money: None,
-//         });
-//         let mut parser = helper.parser();
-
-//         parser.edit();
-
-//         assert_eq!(
-//             helper.logger().0,
-//             "Error: You must change at least one field."
-//         );
-//     }
-
-//     #[test]
-//     fn test_edit_one() {
-//         let (username, _, money) = test_user();
-//         let mut helper = CmdParserHelper::new(Command::Edit {
-//             username: username.clone(),
-//             name: Some(String::from("BigSir")),
-//             money: None,
-//         });
-//         let mut parser = helper.parser();
-
-//         parser.edit();
-
-//         let user = parser.users.get(&username).unwrap();
-
-//         assert_eq!(user.name, "BigSir");
-//         assert_eq!(helper.logger().0, "Succesfully edited field \"name.\"");
-//     }
-
-//     #[test]
-//     fn test_edit_all() {
-//         let username = test_user().0;
-//         let mut helper = CmdParserHelper::new(Command::Edit {
-//             username: username.clone(),
-//             name: Some(String::from("BigSir")),
-//             money: Some(Money::from(0.0)),
-//         });
-//         let mut parser = helper.parser();
-
-//         parser.edit();
-
-//         let user = parser.users.get(&username).unwrap();
-
-//         assert_eq!(user.name, "BigSir");
-//         assert_eq!(user.money, 0.0);
-//         assert_eq!(
-//             helper.logger().0,
-//             "Succesfully edited fields \"name,\" \"money.\""
-//         );
-//     }
-// }
+    struct CmdParserHelper {
+        users: UserList,
+        logger: MockLogger,
+        command: Command,
+    }
+    impl CmdParserHelper {
+        fn new(users: UserList, command: Command) -> Self {
+            CmdParserHelper {
+                users: UserList::default(),
+                logger: MockLogger::default(),
+                command,
+            }
+        }
+        fn parser<'a>(&'a mut self) -> CommandParser<'a, MockLogger> {
+            CommandParser {
+                users: &mut self.users,
+                command: self.command.clone(),
+                logger: &self.logger,
+            }
+        }
+    }
+    #[test]
+    fn test_new() {
+        todo!()
+    }
+    #[test]
+    fn test_insert() {
+        todo!()
+    }
+}

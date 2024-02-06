@@ -2,11 +2,12 @@ use std::fmt::Display;
 
 use crate::money::Money;
 
+use clap::Args;
 use proptest_derive::Arbitrary;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone, Args)]
 pub struct User {
     pub name: String,
     pub money: Money,
