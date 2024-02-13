@@ -1,10 +1,9 @@
 use std::{fmt::Display, str::FromStr};
 
-use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 
 /// Wrapper of f64 used for holding money with basic methods provided.
-#[derive(Serialize, Deserialize, Debug, Default, Arbitrary, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
 pub struct Money(f64);
 
 impl Money {

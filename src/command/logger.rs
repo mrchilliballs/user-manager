@@ -6,6 +6,12 @@ use mockall::mock;
 
 pub trait Logger {
     fn print(&self, value: &str);
+    fn eprint(&self, value: &str) {
+        self.print(value)
+    }
+    fn eprintln(&self, value: &str) {
+        self.println(value)
+    }
     fn println(&self, value: &str) {
         self.print(value);
         self.print("\n");

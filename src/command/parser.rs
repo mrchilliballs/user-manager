@@ -30,7 +30,7 @@ where
         }
     }
     pub fn parse(self) {
-        match &self.command {
+        match self.command {
             Command::Insert { .. } => self.insert(),
             Command::Edit { .. } => self.edit(),
             Command::Get => self.get(),
@@ -38,6 +38,7 @@ where
             Command::Deposit { .. } => self.deposit(),
             Command::Transfer { .. } => self.transfer(),
             Command::Delete { .. } => self.delete(),
+            Command::Clear { .. } => self.clear(),
         }
     }
     // user_list.insert(...)
@@ -51,7 +52,17 @@ where
     }
     // user_list.get_mut(...)
     fn edit(self) {
-        todo!()
+        if let Command::Edit { username, user } = self.command {
+            let original_user = if let Some(user) = self.users.get(&username) {
+                user
+            } else {
+                self.logger
+                    .eprintln(&format!("User \"{username}\" not found."));
+                return;
+            };
+            let changed_user = user.to_original(original_user);
+            self.users.insert(username, changed_user);
+        }
     }
     // user_list.get(...)
     fn get(self) {
@@ -71,6 +82,10 @@ where
     }
     // user_list.delete(...)
     fn delete(self) {
+        todo!()
+    }
+    // user_list.clear(...)
+    fn clear(self) {
         todo!()
     }
 }

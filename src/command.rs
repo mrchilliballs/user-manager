@@ -1,4 +1,4 @@
-use crate::{money::Money, username::Username, User};
+use crate::{money::Money, user::OptionalUser, username::Username, User};
 use clap::{ArgGroup, Subcommand};
 
 pub mod logger;
@@ -12,16 +12,10 @@ pub enum Command {
         #[command(flatten)]
         user: User,
     },
-    #[clap(group(
-        ArgGroup::new("editables")
-            .required(true)
-            .multiple(true)
-            .args(&["name", "money"])
-    ))]
     Edit {
         username: Username,
         #[command(flatten)]
-        user: Option<User>,
+        user: OptionalUser,
     },
     Get,
     Withdraw {
@@ -41,4 +35,6 @@ pub enum Command {
     Delete {
         username: Username,
     },
+    // Confirmation required
+    Clear,
 }
