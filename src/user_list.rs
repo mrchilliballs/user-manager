@@ -9,7 +9,6 @@ use crate::username::Username;
 
 #[cfg(test)]
 use mockall::mock;
-use proptest_derive::Arbitrary;
 
 use serde::{Deserialize, Serialize};
 
@@ -18,10 +17,11 @@ use anyhow::Result;
 // #[cfg(test)]
 // use mockall::mock;
 /// Holds a list of users identified by usernames. No duplicates are held and entries are sorted.
-#[derive(Deserialize, Serialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Serialize, Debug, Default, PartialEq, Eq, Clone)]
 pub struct UserList {
     users: BTreeMap<Username, User>,
     // TEST THIS
+    #[serde(skip_serializing)]
     save_location: Option<PathBuf>,
 }
 
@@ -88,6 +88,8 @@ impl UserList {
     pub fn remove(&mut self, username: &Username) -> Option<User> {
         self.users.remove(username)
     }
+
+    // TODO: Clear
 }
 
 impl Display for UserList {
@@ -120,7 +122,11 @@ impl Drop for UserList {
             .as_os_str()
             .to_str()
             .unwrap_or("(path is not valid UTF-8; cannot be displayed)");
-        let file = match File::options().write(true).open(&save_location) {
+        let file = match File::options()
+            .write(true)
+            .truncate(true)
+            .open(&save_location)
+        {
             Ok(file) => file,
             Err(err) => {
                 eprintln!(
@@ -198,6 +204,7 @@ mod tests {
             User {
                 name: String::from("Sir"),
                 money: 10.0.into(),
+                ..Default::default()
             },
         )
     }
@@ -207,6 +214,7 @@ mod tests {
             User {
                 name: String::from("Wild"),
                 money: 10.0.into(),
+                ..Default::default()
             },
         )
     }
@@ -255,6 +263,7 @@ mod tests {
         user.1 = User {
             name: String::from("Sir"),
             money: Money::new(0.0),
+            ..Default::default()
         };
         user_list.add(user.0.clone(), user.1.clone());
         assert_ne!(user_list.get(&user.0).unwrap(), &user.1);

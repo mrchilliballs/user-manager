@@ -3,17 +3,19 @@ use std::fmt::Display;
 use crate::money::Money;
 
 use clap::Args;
-use proptest_derive::Arbitrary;
 
+use crate::optionalize;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Default, Arbitrary, PartialEq, Eq, Clone, Args)]
-pub struct User {
-    pub name: String,
-    pub money: Money,
-    // Potential new feature: currency symbols
+optionalize! {
+    #[new_name = OptionalUser]
+    #[derive(Serialize, Deserialize, Debug, Default, PartialEq, Eq, Clone, Args)]
+    pub struct User {
+        pub name: String,
+        pub money: Money,
+        // pub currency_symbol: char,
+    }
 }
-
 impl Display for User {
     /// Formatted as "{name} | ${money}". Money is rounded to the nearest hundreth.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -37,6 +39,11 @@ mod tests {
         };
         assert_eq!(user.to_string(), "Wild Sir | $10.00");
     }
+
+    // #[test]
+    // fn test_display_different_currencies() {
+    //     todo!()
+    // }
 
     #[test]
     fn test_display_missing_name() {

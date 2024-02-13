@@ -1,5 +1,4 @@
 use anyhow::Result;
-use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 use thiserror::Error;
@@ -9,7 +8,7 @@ use thiserror::Error;
 pub struct UsernameError;
 
 /// Usernames can only hold ASCII-alphanumeric characters and must not be empty.
-#[derive(Debug, Arbitrary, Hash, PartialEq, Eq, Serialize, Deserialize, Clone, PartialOrd, Ord)]
+#[derive(Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Clone, PartialOrd, Ord)]
 pub struct Username(String);
 impl Username {
     /// Will fail if provided username is not valid.
