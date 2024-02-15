@@ -1,5 +1,7 @@
-use crate::{money::Money, user::OptionalUser, username::Username, User};
-use clap::{ArgGroup, Subcommand};
+use crate::user::User;
+use crate::username::Username;
+use crate::{money::Money, user::OptionalUser};
+use clap::Subcommand;
 
 pub mod logger;
 pub mod parser;

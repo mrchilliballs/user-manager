@@ -31,12 +31,12 @@ mock! {
     }
 }
 
-// TESTS
+// TODO: TESTS
 impl Logger for Term {
     fn print(&self, value: &str) {
         let mut buf_writer = BufWriter::new(self);
         buf_writer
-            .write(value.as_bytes())
+            .write_all(value.as_bytes())
             .expect("Failed to write to terminal");
     }
 }

@@ -96,15 +96,25 @@ mod tests {
 
     use super::*;
     use crate::command::logger::MockLogger;
+    use crate::user::User;
+    use crate::username::Username;
+    use mockall::predicate::eq;
 
-    struct CmdParserHelper {
+    macro_rules! define {
+        ($username:ident, $user:ident) => {
+            let $username = Username::build("WildSir").unwrap();
+            let $user = User::default();
+        };
+    }
+
+    struct CmdParserBuilder {
         users: UserList,
         logger: MockLogger,
         command: Command,
     }
-    impl CmdParserHelper {
-        fn new(users: UserList, command: Command) -> Self {
-            CmdParserHelper {
+    impl CmdParserBuilder {
+        fn new(command: Command) -> Self {
+            CmdParserBuilder {
                 users: UserList::default(),
                 logger: MockLogger::default(),
                 command,
@@ -123,7 +133,61 @@ mod tests {
         todo!()
     }
     #[test]
+    fn test_parse() {
+        todo!()
+    }
+    // Template for other tests.
+    #[test]
     fn test_insert() {
+        define!(username, user);
+
+        let mut builder = CmdParserBuilder::new(Command::Insert {
+            username: username.clone(),
+            user: user.clone(),
+        });
+
+        builder
+            .users
+            .expect_insert()
+            .once()
+            .with(eq(username), eq(user))
+            .return_const(());
+        builder
+            .logger
+            .expect_println()
+            .with(eq("Sucessfully inserted user."))
+            .once()
+            .return_const(());
+
+        let parser = builder.parser();
+        parser.insert();
+    }
+    #[test]
+    fn test_edit() {
+        todo!()
+    }
+    #[test]
+    fn test_get() {
+        todo!()
+    }
+    #[test]
+    fn test_withdraw() {
+        todo!()
+    }
+    #[test]
+    fn test_deposit() {
+        todo!()
+    }
+    #[test]
+    fn test_transfer() {
+        todo!()
+    }
+    #[test]
+    fn test_delete() {
+        todo!()
+    }
+    #[test]
+    fn test_clear() {
         todo!()
     }
 }

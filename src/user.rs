@@ -1,10 +1,10 @@
 use std::fmt::Display;
 
 use crate::money::Money;
+use crate::optionalize;
 
 use clap::Args;
 
-use crate::optionalize;
 use serde::{Deserialize, Serialize};
 
 optionalize! {
