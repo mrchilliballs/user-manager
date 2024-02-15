@@ -1,4 +1,6 @@
 use anyhow::Result;
+#[cfg(test)]
+use mockall::mock;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 use thiserror::Error;
@@ -10,6 +12,7 @@ pub struct UsernameError;
 /// Usernames can only hold ASCII-alphanumeric characters and must not be empty.
 #[derive(Debug, Hash, PartialEq, Eq, Serialize, Deserialize, Clone, PartialOrd, Ord)]
 pub struct Username(String);
+
 impl Username {
     /// Will fail if provided username is not valid.
     pub fn build(username: &str) -> Result<Self, UsernameError> {
@@ -40,7 +43,6 @@ impl Username {
         &self.0
     }
 }
-
 impl FromStr for Username {
     type Err = UsernameError;
     /// Candidate must be ASCII-alphanumeric and must not be empty.
@@ -53,6 +55,22 @@ impl Display for Username {
     /// Simply displays the username.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.get())
+    }
+}
+
+#[cfg(test)]
+mock! {
+    #[derive(Debug, Eq, Serialize, Deserialize)]
+    pub Username {}
+    impl PartialEq for Username {
+        fn eq(&self, other: &Self) -> bool;
+    }
+    impl Clone for Username {
+        fn clone(&self) -> Self;
+    }
+    impl FromStr for Username {
+        type Err = UsernameError;
+        fn from_str(candidate: &str) -> Result<Self, <Self as FromStr>::Err>;
     }
 }
 

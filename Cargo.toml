@@ -1,4 +1,3 @@
-workspace = { members = ["user_manager_macro"] }
 [package]
 name = "user-manager"
 version = "0.1.0"
@@ -11,12 +10,11 @@ anyhow = "1.0.79"
 clap = { version = "4.4.18", features = ["derive"] }
 console = "0.15.8"
 dialoguer = "0.11.0"
-mockall_double = "0.3.1"
-proptest = "1.4.0"
 serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
 thiserror = "1.0.56"
-user-manager-macro = { path = "./user_manager_macro" }
+toml = "0.8.10"
 
 [dev-dependencies]
 mockall = "0.12.1"
+mockall_double = "0.3.1"

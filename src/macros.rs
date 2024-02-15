@@ -17,7 +17,7 @@ macro_rules! optionalize {
         }
         // Rename this terrible function
         impl $new_struct_name {
-            // Clones user
+            // Clones nescessary fields
             pub fn to_original(self, value: &$struct_name) -> $struct_name {
                     $(
                         let $field_name: $field_type;
@@ -36,7 +36,4 @@ macro_rules! optionalize {
             }
         }
     }
-}
-macro_rules! generate_function_name {
-    () => {};
 }

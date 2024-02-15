@@ -1,8 +1,6 @@
 use std::{
     fs::File,
     io::{BufReader, BufWriter, ErrorKind},
-    path::PathBuf,
-    str::FromStr,
 };
 
 use anyhow::{anyhow, Context, Result};
@@ -13,19 +11,19 @@ use user_manager::{cli::Cli, UserList};
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let file_outer = File::open("users.json");
-    let path = PathBuf::from_str("users.json").unwrap();
+    // let path = PathBuf::from_str("users.json").unwrap();
     let mut users = match &file_outer {
         Ok(file) => {
             let mut buf = BufReader::new(file);
-            UserList::load(&mut buf, Some(path)).context("Failed to read users.json")?
+            UserList::load(&mut buf).context("Failed to read users.json")?
         }
         Err(err) => {
             if let ErrorKind::NotFound = err.kind() {
                 let file = File::create("users.json").context("Failed to create users.json")?;
                 let mut buf = BufWriter::new(file);
-                let mut users = UserList::new(None);
+                let users = UserList::new();
                 users
-                    .save(&mut buf, Some(path))
+                    .save(&mut buf)
                     .context("Failed to write to users.json")?;
                 users
             } else {
@@ -37,3 +35,7 @@ fn main() -> Result<()> {
     cli.parse_command(&mut users, &term);
     Ok(())
 }
+
+// struct App {
+//     settings: Settings,
+// }
