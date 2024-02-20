@@ -11,9 +11,13 @@ macro_rules! optionalize {
         $visibility struct $struct_name {
             $($field_vis $field_name : $field_type),*
         }
-        #[derive(Debug, PartialEq, Clone, Args)]
+        #[derive(Debug, PartialEq, Clone, Args, Default)]
+        #[group(multiple = true, required = true)]
         $visibility struct $new_struct_name {
-            $($field_vis $field_name : Option<$field_type>),*
+            $(
+                #[arg(long, value_name = "$field_name", group = "$field_name")]
+                $field_vis $field_name : Option<$field_type>
+            ),*
         }
         // Rename this terrible function
         impl $new_struct_name {
