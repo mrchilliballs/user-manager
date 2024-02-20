@@ -19,7 +19,9 @@ pub enum Command {
         #[command(flatten)]
         user: OptionalUser,
     },
-    Get,
+    Get {
+        username: Option<Username>,
+    },
     Withdraw {
         username: Username,
         amount: Money,

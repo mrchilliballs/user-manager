@@ -44,14 +44,9 @@ impl UserList {
     pub fn insert(&mut self, username: Username, user: User) {
         self.users.insert(username, user);
     }
-    /// Adds a new entry to UserList, returning None if an entry already exists.
-    pub fn add(&mut self, username: Username, user: User) -> Option<()> {
-        if !self.users.contains_key(&username) {
-            self.insert(username, user);
-            Some(())
-        } else {
-            None
-        }
+    /// Adds a new entry to UserList, returning it if it already exists
+    pub fn add(&mut self, username: Username, user: User) -> &User {
+        self.users.entry(username).or_insert(user)
     }
     /// Gets a user from UserList, returning None if it does not exist.
     pub fn get(&self, username: &Username) -> Option<&User> {
@@ -90,6 +85,12 @@ impl Display for UserList {
             }
         }
         Ok(())
+    }
+}
+
+impl From<BTreeMap<Username, User>> for UserList {
+    fn from(value: BTreeMap<Username, User>) -> Self {
+        Self { users: value }
     }
 }
 // impl Drop for UserList {
@@ -136,9 +137,9 @@ mock! {
         pub fn save<T: 'static + Write>(&self, writer: &mut T) -> Result<(), serde_json::Error>;
         pub fn insert(&mut self, username: Username, user: User);
         pub fn add(&mut self, username: Username, user: User) -> Option<()>;
-        pub fn get(&self, username: &Username) -> Option<&'static User>;
+        pub fn get<'a>(&'a self, username: &Username) -> Option<&'a User>;
         pub fn get_mut(&mut self, username: &Username) -> Option<&'static mut User>;
-        pub fn get_all(&self) -> &'static BTreeMap<Username, User>;
+        pub fn get_all(&self) -> &BTreeMap<Username, User>;
         pub fn remove(&mut self, username: &Username) -> Option<User>;
     }
     impl PartialEq for UserList {
@@ -158,7 +159,7 @@ mod tests {
 
     use super::*;
 
-    pub fn example_user_list() -> UserList {
+    fn example_user_list() -> UserList {
         let mut map = BTreeMap::new();
         let user1 = example_user_1();
         let user2 = example_user_2();
@@ -167,7 +168,7 @@ mod tests {
         UserList { users: map.into() }
     }
 
-    pub fn example_user_1() -> (Username, User) {
+    fn example_user_1() -> (Username, User) {
         (
             Username::from_str("WildSir").unwrap(),
             User {
@@ -176,7 +177,7 @@ mod tests {
             },
         )
     }
-    pub fn example_user_2() -> (Username, User) {
+    fn example_user_2() -> (Username, User) {
         (
             Username::from_str("Sir").unwrap(),
             User {
@@ -186,7 +187,7 @@ mod tests {
             },
         )
     }
-    pub fn example_user_3() -> (Username, User) {
+    fn example_user_3() -> (Username, User) {
         (
             Username::from_str("Wild").unwrap(),
             User {

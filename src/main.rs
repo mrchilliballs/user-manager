@@ -33,6 +33,9 @@ fn main() -> Result<()> {
     };
     let term = Term::stdout();
     cli.parse_command(&mut users, &term);
+
+    let mut file = File::create("users.json").unwrap();
+    users.save(&mut file)?;
     Ok(())
 }
 

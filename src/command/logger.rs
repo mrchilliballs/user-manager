@@ -25,6 +25,8 @@ mock! {
     impl Logger for Logger {
         fn print(&self, value: &str);
         fn println(&self, value: &str);
+        fn eprintln(&self, value: &str);
+        fn eprint(&self, value: &str);
     }
     impl PartialEq for Logger {
         fn eq(&self, other: &Self) -> bool;
