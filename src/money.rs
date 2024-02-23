@@ -1,5 +1,8 @@
 use std::{fmt::Display, str::FromStr};
 
+use clap::builder::TypedValueParser;
+#[cfg(test)]
+use mockall::{automock, mock};
 use serde::{Deserialize, Serialize};
 
 /// Wrapper of f64 used for holding money with basic methods provided.
@@ -68,6 +71,34 @@ impl PartialEq<f64> for Money {
     }
 }
 impl Eq for Money {}
+
+#[derive(Clone)]
+pub struct MoneyParser;
+
+#[cfg(test)]
+mock! {
+    #[derive(Debug)]
+    pub Money {
+        pub fn new(amount: f64) -> Self;
+        pub fn val(&self) -> f64;
+        pub fn set(&mut self, amount: f64);
+        pub fn withdraw(&mut self, amount: f64);
+        pub fn deposit(&mut self, amount: f64);
+    }
+    impl FromStr for Money {
+        type Err = anyhow::Error;
+        fn from_str(s: &str) -> Result<Self, <MockMoney as FromStr>::Err>;
+    }
+    impl PartialEq for Money {
+        fn eq(&self, other: &Self) -> bool;
+    }
+    impl Clone for Money {
+        fn clone(&self) -> Self;
+    }
+    impl From<f64> for Money {
+        fn from(value: f64) -> Self;
+    }
+}
 
 #[cfg(test)]
 mod tests {

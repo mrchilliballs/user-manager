@@ -1,6 +1,8 @@
+#[cfg_attr(test, mockall_double::double)]
+use crate::money::Money;
+use crate::user::OptionalUser;
 use crate::user::User;
 use crate::username::Username;
-use crate::{money::Money, user::OptionalUser};
 use clap::Subcommand;
 
 pub mod logger;
