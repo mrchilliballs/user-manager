@@ -13,7 +13,6 @@ optionalize! {
     pub struct User {
         pub name: String,
         pub money: Money,
-        // pub currency_symbol: char,
     }
 }
 impl Display for User {
