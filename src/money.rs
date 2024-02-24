@@ -1,15 +1,16 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Display, num::ParseFloatError, str::FromStr};
 
 #[cfg(test)]
 use mockall::mock;
 use serde::{Deserialize, Serialize};
 
-/// Wrapper of f64 used for holding money with basic methods provided.
+/// Wrapper of i64 used for holding money with basic methods provided, where each unit represents a cent.
+/// This allows for accurate and precise handling of currency values.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
 pub struct Money(i64);
 
 impl Money {
-    /// Creates an instance of Money holding `amount`.
+    /// Creates an instance of Money holding `amount` (in cents).
     pub fn new(amount: i64) -> Self {
         Money(amount)
     }
@@ -36,16 +37,18 @@ impl Money {
 }
 
 impl From<i64> for Money {
-    /// Creates a new instance of money holding the value.
+    /// Creates a new instance of money in cents.
     fn from(value: i64) -> Self {
         Money::new(value)
     }
 }
 
 impl FromStr for Money {
-    type Err = anyhow::Error;
+    type Err = ParseFloatError;
+    // Input may start with a dollar sign ($), and the value should be formatted as float.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Money::from(s.parse::<f64>().unwrap() as i64))
+        let amount_str = if s.starts_with("$") { &s[1..] } else { s };
+        Ok(Money::from((amount_str.parse::<f64>()? * 100.0) as i64))
     }
 }
 
@@ -55,6 +58,7 @@ impl Display for Money {
     /// `$100.00`
     /// `$99.99`
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Maybe custom currencies?
         write!(f, "${:.2}", self.0 as f64 / 100.0)
     }
 }
@@ -138,7 +142,17 @@ mod tests {
     #[test]
     fn test_from_str() {
         let money_str = "100.50";
-        assert!(Money::from_str(money_str).is_ok());
+        let money = Money::from_str(money_str).unwrap();
+
+        assert_eq!(money.val(), 10050);
+    }
+
+    #[test]
+    fn test_from_str_with_currency() {
+        let money_str = "$100.50";
+        let money = Money::from_str(money_str).unwrap();
+
+        assert_eq!(money.val(), 10050);
     }
 
     #[test]
