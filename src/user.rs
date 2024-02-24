@@ -35,7 +35,7 @@ mod tests {
     fn test_display() {
         let user = User {
             name: String::from("Wild Sir"),
-            money: Money::from(10.0),
+            money: Money::from(1000),
         };
         assert_eq!(user.to_string(), "Wild Sir | $10.00");
     }
@@ -48,7 +48,7 @@ mod tests {
     #[test]
     fn test_display_missing_name() {
         let user = User {
-            money: Money::from(10.0),
+            money: Money::from(1000),
             ..Default::default()
         };
         assert_eq!(user.to_string(), "Unnamed User | $10.00");

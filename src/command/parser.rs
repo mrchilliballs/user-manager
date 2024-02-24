@@ -59,7 +59,7 @@ where
                 return;
             };
             // TODO: This should maybe be tested for? meh
-            let changed_user = user.to_original(original_user);
+            let changed_user = user.to_original(original_user.clone());
 
             self.users.insert(username, changed_user);
             self.logger.println("Sucessfully edited user.")
@@ -95,13 +95,8 @@ where
 mod tests {
     // Note: Do mocking expects before running the actual code being tested.
 
-    use std::collections::BTreeMap;
-    use std::str::FromStr;
-
     use super::*;
     use crate::command::logger::MockLogger;
-    #[mockall_double::double]
-    use crate::money::Money;
     use crate::user::{OptionalUser, User};
     use crate::username::Username;
     use mockall::predicate::eq;
@@ -141,6 +136,9 @@ mod tests {
                 username: None
             },
         };
+
+        users.expect_eq().once().return_const(true);
+        logger.expect_eq().once().return_const(true);
 
         let parser = CommandParser::new(command.clone(), &mut users, &mut logger);
 
