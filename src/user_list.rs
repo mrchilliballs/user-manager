@@ -182,7 +182,7 @@ mod tests {
             Username::from_str("Sir").unwrap(),
             User {
                 name: String::from("Sir"),
-                money: 10.0.into(),
+                money: 1000.into(),
                 ..Default::default()
             },
         )
@@ -192,7 +192,7 @@ mod tests {
             Username::from_str("Wild").unwrap(),
             User {
                 name: String::from("Wild"),
-                money: 10.0.into(),
+                money: 1000.into(),
                 ..Default::default()
             },
         )
@@ -240,7 +240,7 @@ mod tests {
         let mut user = example_user_1();
         user.1 = User {
             name: String::from("Sir"),
-            money: Money::new(0.0),
+            money: Money::new(0),
             ..Default::default()
         };
         user_list.add(user.0.clone(), user.1.clone());

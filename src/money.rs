@@ -1,44 +1,43 @@
 use std::{fmt::Display, str::FromStr};
 
-use clap::builder::TypedValueParser;
 #[cfg(test)]
-use mockall::{automock, mock};
+use mockall::mock;
 use serde::{Deserialize, Serialize};
 
 /// Wrapper of f64 used for holding money with basic methods provided.
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
-pub struct Money(f64);
+pub struct Money(i64);
 
 impl Money {
     /// Creates an instance of Money holding `amount`.
-    pub fn new(amount: f64) -> Self {
+    pub fn new(amount: i64) -> Self {
         Money(amount)
     }
     /// Returns the amount of money.
-    pub fn val(&self) -> f64 {
+    pub fn val(&self) -> i64 {
         self.0
     }
     /// Sets the amount of money.
-    pub fn set(&mut self, amount: f64) {
+    pub fn set(&mut self, amount: i64) {
         self.0 = amount
     }
     /// Withdraws (subtracts) the amount from the money.
     /// # Panics
     /// * Will panic if computation overflows.
-    pub fn withdraw(&mut self, amount: f64) {
+    pub fn withdraw(&mut self, amount: i64) {
         self.0 -= amount;
     }
     /// Deposits (adds) the amount to the money.
     /// # Panics
     /// * Will panic if computation overflows.
-    pub fn deposit(&mut self, amount: f64) {
+    pub fn deposit(&mut self, amount: i64) {
         self.0 += amount;
     }
 }
 
-impl From<f64> for Money {
+impl From<i64> for Money {
     /// Creates a new instance of money holding the value.
-    fn from(value: f64) -> Self {
+    fn from(value: i64) -> Self {
         Money::new(value)
     }
 }
@@ -46,7 +45,7 @@ impl From<f64> for Money {
 impl FromStr for Money {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Money::from(s.parse::<f64>()?))
+        Ok(Money::from(s.parse::<f64>().unwrap() as i64))
     }
 }
 
@@ -56,7 +55,7 @@ impl Display for Money {
     /// `$100.00`
     /// `$99.99`
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "${:.2}", self.0)
+        write!(f, "${:.2}", self.0 as f64 / 100.0)
     }
 }
 
@@ -65,8 +64,8 @@ impl PartialEq for Money {
         self.val() == other.val()
     }
 }
-impl PartialEq<f64> for Money {
-    fn eq(&self, other: &f64) -> bool {
+impl PartialEq<i64> for Money {
+    fn eq(&self, other: &i64) -> bool {
         self.val() == *other
     }
 }
@@ -79,11 +78,11 @@ pub struct MoneyParser;
 mock! {
     #[derive(Debug)]
     pub Money {
-        pub fn new(amount: f64) -> Self;
-        pub fn val(&self) -> f64;
-        pub fn set(&mut self, amount: f64);
-        pub fn withdraw(&mut self, amount: f64);
-        pub fn deposit(&mut self, amount: f64);
+        pub fn new(amount: i64) -> Self;
+        pub fn val(&self) -> i64;
+        pub fn set(&mut self, amount: i64);
+        pub fn withdraw(&mut self, amount: i64);
+        pub fn deposit(&mut self, amount: i64);
     }
     impl FromStr for Money {
         type Err = anyhow::Error;
@@ -95,8 +94,8 @@ mock! {
     impl Clone for Money {
         fn clone(&self) -> Self;
     }
-    impl From<f64> for Money {
-        fn from(value: f64) -> Self;
+    impl From<i64> for Money {
+        fn from(value: i64) -> Self;
     }
 }
 
@@ -106,34 +105,34 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let money = Money::new(10.0);
-        assert_eq!(money.0, 10.0);
+        let money = Money::new(1000);
+        assert_eq!(money.0, 1000);
     }
     #[test]
     fn test_val() {
-        let money = Money::new(10.0);
+        let money = Money::new(1000);
         assert_eq!(money.0, money.val());
     }
 
     #[test]
     fn test_set() {
-        let mut money = Money::new(5.0);
-        money.set(10.0);
-        assert_eq!(money.val(), 10.0);
+        let mut money = Money::new(500);
+        money.set(1000);
+        assert_eq!(money.val(), 1000);
     }
 
     #[test]
     fn test_deposit() {
-        let mut money = Money::new(5.0);
-        money.deposit(5.0);
-        assert_eq!(money.val(), 10.0);
+        let mut money = Money::new(500);
+        money.deposit(500);
+        assert_eq!(money.val(), 1000);
     }
 
     #[test]
     fn test_withdraw() {
-        let mut money = Money::new(15.0);
-        money.withdraw(5.0);
-        assert_eq!(money.val(), 10.0);
+        let mut money = Money::new(1500);
+        money.withdraw(500);
+        assert_eq!(money.val(), 1000);
     }
 
     #[test]
@@ -144,28 +143,28 @@ mod tests {
 
     #[test]
     fn test_from_f64() {
-        let money: Money = 10.0.into();
-        assert_eq!(money.val(), 10.0);
+        let money: Money = 1000.into();
+        assert_eq!(money.val(), 1000);
     }
 
     #[test]
     fn test_display() {
-        let money = Money::new(10.0);
+        let money = Money::new(1000);
         assert_eq!(money.to_string(), "$10.00");
     }
 
     #[test]
     fn test_partial_eq() {
-        let money1 = Money::new(10.0);
-        let money2 = Money::new(10.0);
+        let money1 = Money::new(1000);
+        let money2 = Money::new(1000);
 
         assert!(money1 == money2);
     }
 
     #[test]
     fn test_partial_eq_f64() {
-        let money = Money::new(10.0);
-        let money_float = 10.0;
+        let money = Money::new(1000);
+        let money_float = 1000;
 
         assert!(money == money_float);
     }

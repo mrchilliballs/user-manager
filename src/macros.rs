@@ -22,13 +22,13 @@ macro_rules! optionalize {
         // Rename this terrible function
         impl $new_struct_name {
             // Clones nescessary fields
-            pub fn to_original(self, value: &$struct_name) -> $struct_name {
+            pub fn to_original(self, value: $struct_name) -> $struct_name {
                     $(
                         let $field_name: $field_type;
                         if let Some(val) = self.$field_name {
                             $field_name = val;
                         } else  {
-                            $field_name = value.$field_name.clone();
+                            $field_name = value.$field_name;
                         }
                     )+
 
