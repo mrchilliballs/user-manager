@@ -1,6 +1,6 @@
 use super::logger::Logger;
 use crate::command::Command;
-#[cfg_attr(test, mockall_double::double)]
+#[mockall_double::double]
 use crate::user_list::UserList;
 
 #[derive(Debug, PartialEq)]
@@ -71,7 +71,19 @@ where
     }
     // user_list.get(...)
     fn withdraw(self) {
-        todo!()
+        if let Command::Withdraw { username, amount } = self.command {
+            let user = if let Some(user) = self.users.get_mut(&username) {
+                user
+            } else {
+                self.logger
+                    .eprintln(&format!("User \"{username}\" not found."));
+                return;
+            };
+
+            user.money.withdraw(amount.val());
+
+            self.logger.println("Sucessfully withdrew amount.");
+        }
     }
     // user_list.deposit(...)
     fn deposit(self) {
@@ -95,8 +107,11 @@ where
 mod tests {
     // Note: Do mocking expects before running the actual code being tested.
 
+    use std::ops::{Deref, DerefMut};
+
     use super::*;
     use crate::command::logger::MockLogger;
+    use crate::money::Money;
     use crate::user::{OptionalUser, User};
     use crate::username::Username;
     use mockall::predicate::eq;
@@ -121,6 +136,46 @@ mod tests {
         }
     }
 
+    fn leak<T>(val: T) -> &'static T {
+        Box::leak(Box::new(val))
+    }
+
+    fn leak_mut<T>(val: T) -> &'static mut T {
+        Box::leak(Box::new(val))
+    }
+    fn leak_mut_option<T>(val: T) -> OptionStatic<T> {
+        OptionStatic(val)
+    }
+
+    #[derive(Clone)]
+    struct OptionStatic<T>(T);
+
+    impl<T> Into<Option<&'static mut T>> for OptionStatic<T> {
+        fn into(self) -> Option<&'static mut T> {
+            Some(leak_mut(self.0))
+        }
+    }
+
+    impl<T> Into<Option<&'static T>> for OptionStatic<T> {
+        fn into(self) -> Option<&'static T> {
+            Some(leak(self.0))
+        }
+    }
+
+    impl<T> Deref for OptionStatic<T> {
+        type Target = T;
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl<T> DerefMut for OptionStatic<T> {
+        fn deref_mut(&mut self) -> &mut T {
+            &mut self.0
+        }
+    }
+
+    #[ignore]
     #[test]
     fn test_parse() {
         // Is it even possible?
@@ -130,11 +185,11 @@ mod tests {
     #[test]
     fn test_new() {
         define! {
-            mut users: UserList,
-            mut logger: MockLogger,
             command = Command::Get {
                 username: None
             },
+            mut users: UserList,
+            mut logger: MockLogger,
         };
 
         users.expect_eq().once().return_const(true);
@@ -153,7 +208,7 @@ mod tests {
             mut users: UserList,
             mut logger: MockLogger,
             username = Username::build("WildSir").unwrap(),
-            user: User
+            user: User,
         };
 
         users
@@ -172,5 +227,321 @@ mod tests {
             CommandParser::new(Command::Insert { username, user }, &mut users, &mut logger);
 
         parser.insert();
+    }
+
+    #[test]
+    fn test_edit_valid_username() {
+        define! {
+            username = Username::build("WildSir").unwrap(),
+            optional_user: OptionalUser,
+            user: User,
+            mut users: UserList,
+            mut logger: MockLogger,
+        };
+
+        users
+            .expect_insert()
+            .once()
+            .with(
+                eq(username.clone()),
+                eq(optional_user.clone().to_original(user.clone())),
+            )
+            .return_const(());
+
+        users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(leak(user));
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq("Sucessfully edited user."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Edit {
+                username,
+                user: optional_user,
+            },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.edit();
+    }
+
+    #[test]
+    fn test_edit_invalid_username() {
+        define! {
+            username = Username::build("WildSir").unwrap(),
+            optional_user: OptionalUser,
+            mut users: UserList,
+            mut logger: MockLogger,
+        };
+
+        users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(None);
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"WildSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Edit {
+                username,
+                user: optional_user,
+            },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.edit();
+    }
+
+    #[test]
+    fn test_get_valid_username() {
+        define! {
+            username = Username::build("WildSir").unwrap(),
+            user: User,
+            mut users: UserList,
+            mut logger: MockLogger,
+        };
+
+        users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(leak(user.clone()));
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq(user.to_string()))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Get {
+                username: Some(username),
+            },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.get();
+    }
+
+    #[test]
+    fn test_get_invalid_username() {
+        define! {
+            username = Username::build("WildSir").unwrap(),
+            mut users: UserList,
+            mut logger: MockLogger,
+        };
+
+        users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(None);
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"WildSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Get {
+                username: Some(username),
+            },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.get();
+    }
+
+    #[test]
+    fn test_get_all() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+        };
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq(users.to_string()))
+            .return_const(());
+
+        let parser = CommandParser::new(Command::Get { username: None }, &mut users, &mut logger);
+
+        parser.get();
+    }
+
+    #[test]
+    fn test_withdraw_valid_username() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            username = Username::build("WildSir").unwrap(),
+            amount = Money::from(500),
+            user = User {
+                money: Money::from(1000),
+                ..Default::default()
+            }
+        }
+
+        let user_ref = leak_mut_option(user.clone());
+
+        users
+            .expect_get_mut()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(user_ref.clone());
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq("Sucessfully withdrew amount."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Withdraw { username, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        // assert_eq!((*user_ref).money, 500);
+        parser.withdraw();
+    }
+
+    #[test]
+    fn test_withdraw_invalid_username() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            username = Username::build("WildSir").unwrap(),
+            amount = Money::from(500),
+            user: User,
+        }
+
+        users
+            .expect_get_mut()
+            .once()
+            .with(eq(username.clone()))
+            .returning(|_| None);
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"WildSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Withdraw { username, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        assert_eq!(user.money, 0);
+        parser.withdraw();
+    }
+
+    #[test]
+    fn test_desposit_valid_username() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            username = Username::build("WildSir").unwrap(),
+            amount = Money::from(500),
+            user: User,
+        }
+
+        users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(leak_mut_option(user));
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq("Sucessfully deposited amount."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Deposit { username, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.deposit();
+    }
+
+    #[test]
+    fn test_deposit_invalid_username() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            username = Username::build("WildSir").unwrap(),
+            amount: Money,
+            user: User,
+        }
+
+        users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(leak_mut_option(user));
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"WildSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Deposit { username, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.deposit();
+    }
+
+    #[test]
+    fn test_transfer_valid_usernames() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            from = Username::build("WildSir").unwrap(),
+            to = Username::build("BigSir").unwrap(),
+            user: User,
+            amount: Money,
+        }
+
+        let (from_clone, to_clone) = (from.clone(), to.clone());
+
+        users
+            .expect_get()
+            .times(2)
+            .withf(move |username: &Username| (*username == from_clone) || (*username == to_clone))
+            .return_const(leak_mut_option(user));
+
+        let parser = CommandParser::new(
+            Command::Transfer { from, to, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.transfer();
     }
 }

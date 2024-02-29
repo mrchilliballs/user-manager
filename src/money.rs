@@ -75,9 +75,6 @@ impl PartialEq<i64> for Money {
 }
 impl Eq for Money {}
 
-#[derive(Clone)]
-pub struct MoneyParser;
-
 #[cfg(test)]
 mock! {
     #[derive(Debug)]
@@ -87,6 +84,8 @@ mock! {
         pub fn set(&mut self, amount: i64);
         pub fn withdraw(&mut self, amount: i64);
         pub fn deposit(&mut self, amount: i64);
+        fn private_deserialize(deserializable: Result<Money, ()>) -> Self;
+        fn private_serialize(&self) -> Money;
     }
     impl FromStr for Money {
         type Err = anyhow::Error;
@@ -100,6 +99,30 @@ mock! {
     }
     impl From<i64> for Money {
         fn from(value: i64) -> Self;
+    }
+    impl Eq for Money {}
+    impl Display for Money {
+        fn fmt<'a>(&self, f: &mut std::fmt::Formatter<'a>) -> std::fmt::Result;
+    }
+}
+
+// https://github.com/asomers/mockall/blob/master/mockall/examples/serde.rs
+
+#[cfg(test)]
+impl serde::Serialize for MockMoney {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        self.private_serialize().serialize(s)
+    }
+}
+
+#[cfg(test)]
+impl<'de> Deserialize<'de> for MockMoney {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let serializable = Money::deserialize(deserializer).map_err(|_| ());
+        Ok(MockMoney::private_deserialize(serializable))
     }
 }
 

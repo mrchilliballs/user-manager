@@ -1,6 +1,6 @@
 use clap::Parser;
 
-#[cfg_attr(test, mockall_double::double)]
+#[mockall_double::double]
 use crate::user_list::UserList;
 use crate::{
     command::parser::CommandParser,

@@ -1,4 +1,3 @@
-#[cfg_attr(test, mockall_double::double)]
 use crate::money::Money;
 use crate::user::OptionalUser;
 use crate::user::User;
@@ -35,7 +34,7 @@ pub enum Command {
     Transfer {
         from: Username,
         to: Username,
-        amount: f64,
+        amount: Money,
     },
     // Confirmation required
     Delete {
