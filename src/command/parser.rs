@@ -536,6 +536,12 @@ mod tests {
             .withf(move |username: &Username| (*username == from_clone) || (*username == to_clone))
             .return_const(leak_mut_option(user));
 
+        logger
+            .expect_println()
+            .once()
+            .with(eq("Sucessfully transfered amount."))
+            .return_const(());
+
         let parser = CommandParser::new(
             Command::Transfer { from, to, amount },
             &mut users,
@@ -543,5 +549,149 @@ mod tests {
         );
 
         parser.transfer();
+    }
+
+    #[test]
+    fn test_transfer_both_invalid_usernames() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            from = Username::build("WildSir").unwrap(),
+            to = Username::build("BigSir").unwrap(),
+            amount: Money,
+        }
+
+        let (from_clone, to_clone) = (from.clone(), to.clone());
+
+        users
+            .expect_get()
+            .times(2)
+            .withf(move |username: &Username| (*username == from_clone) || (*username == to_clone))
+            .return_const(None);
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"WildSir\" and \"BigSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Transfer { from, to, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.transfer();
+    }
+
+    #[test]
+    fn test_transfer_one_invalid_username() {
+        define! {
+            mut users: UserList,
+            mut logger: MockLogger,
+            from = Username::build("WildSir").unwrap(),
+            to = Username::build("BigSir").unwrap(),
+            amount: Money,
+            user: User,
+        }
+
+        let (from_clone1, from_clone2, to_clone) = (from.clone(), from.clone(), to.clone());
+
+        users
+            .expect_get()
+            .times(2)
+            .withf(move |username: &Username| (*username == from_clone1) || (*username == to_clone))
+            .returning(move |username: &Username| {
+                if *username == from_clone2 {
+                    let user = user.clone();
+                    Some(leak(user))
+                } else {
+                    None
+                }
+            });
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"BigSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(
+            Command::Transfer { from, to, amount },
+            &mut users,
+            &mut logger,
+        );
+
+        parser.transfer();
+    }
+
+    #[test]
+    fn test_delete_valid_username() {
+        define! {
+            mut logger: MockLogger,
+            mut users: UserList,
+            username = Username::build("WildSir").unwrap(),
+            user: User,
+        }
+
+        users
+            .expect_remove()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(Some(user));
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq("Succesfully deleted user."))
+            .return_const(());
+
+        let parser = CommandParser::new(Command::Delete { username }, &mut users, &mut logger);
+
+        parser.delete();
+    }
+
+    #[test]
+    fn test_delete_invalid_username() {
+        define! {
+            mut logger: MockLogger,
+            mut users: UserList,
+            username = Username::build("WildSir").unwrap(),
+        }
+
+        users
+            .expect_remove()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(None);
+
+        logger
+            .expect_eprintln()
+            .once()
+            .with(eq("User \"WildSir\" not found."))
+            .return_const(());
+
+        let parser = CommandParser::new(Command::Delete { username }, &mut users, &mut logger);
+
+        parser.delete();
+    }
+
+    #[test]
+    fn test_clear() {
+        define! {
+            mut logger: MockLogger,
+            mut users: UserList,
+        }
+
+        users.expect_clear().once().return_const(());
+
+        logger
+            .expect_println()
+            .once()
+            .with(eq("Sucesfully cleared list."))
+            .return_const(());
+
+        let parser = CommandParser::new(Command::Clear, &mut users, &mut logger);
+        parser.clear()
     }
 }

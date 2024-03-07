@@ -15,6 +15,7 @@ use anyhow::Result;
 /// Holds a list of users identified by usernames. No duplicates are held and entries are sorted.
 #[derive(Deserialize, Serialize, Debug, Default, PartialEq, Eq, Clone)]
 pub struct UserList {
+    // Make this public?
     users: BTreeMap<Username, User>,
 }
 
@@ -65,7 +66,10 @@ impl UserList {
         self.users.remove(username)
     }
 
-    // TODO: Clear
+    /// Clears all users from UserList.
+    pub fn clear(&mut self) {
+        self.users.clear();
+    }
 }
 
 impl Display for UserList {
@@ -88,11 +92,6 @@ impl Display for UserList {
     }
 }
 
-impl From<BTreeMap<Username, User>> for UserList {
-    fn from(value: BTreeMap<Username, User>) -> Self {
-        Self { users: value }
-    }
-}
 // impl Drop for UserList {
 //     fn drop(&mut self) {
 //         let save_location = if let Some(save_location) = self.save_location.clone() {
@@ -141,6 +140,8 @@ mock! {
         pub fn get_mut(&mut self, username: &Username) -> Option<&'static mut User>;
         pub fn get_all(&self) -> &BTreeMap<Username, User>;
         pub fn remove(&mut self, username: &Username) -> Option<User>;
+        // TEST IT
+        pub fn clear(&mut self);
     }
     impl PartialEq for UserList {
         fn eq(&self, other: &Self) -> bool;
@@ -154,7 +155,7 @@ mock! {
 #[cfg(test)]
 mod tests {
     use std::{
-        io::{Cursor, Read},
+        io::{empty, Cursor, Read},
         str::FromStr,
     };
 
@@ -305,6 +306,15 @@ mod tests {
         );
         // Make JSON PRETTY AND CHECK FOR THAT
         todo!()
+    }
+
+    #[test]
+    fn test_clear() {
+        let empty_list = UserList::new();
+        let mut list = example_user_list();
+        list.clear();
+
+        assert_eq!(empty_list, list);
     }
 
     #[test]
