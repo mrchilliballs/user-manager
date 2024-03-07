@@ -67,7 +67,18 @@ where
     }
     // user_list.get(...)
     fn get(self) {
-        todo!()
+        if let Command::Get { username } = self.command {
+            if let Some(username) = username {
+                if let Some(user) = self.users.get(&username) {
+                    self.logger.println(&user.to_string());
+                } else {
+                    self.logger
+                        .eprintln(&format!("User \"{username}\" not found."));
+                }
+            } else {
+                self.logger.println(&format!("{}", self.users));
+            }
+        }
     }
     // user_list.get(...)
     fn withdraw(self) {
@@ -82,24 +93,64 @@ where
 
             user.money.withdraw(amount.val());
 
-            self.logger.println("Sucessfully withdrew amount.");
+            self.logger.println("Successfully withdrew amount.");
         }
     }
     // user_list.deposit(...)
     fn deposit(self) {
-        todo!()
+        if let Command::Deposit { username, amount } = self.command {
+            let user = if let Some(user) = self.users.get_mut(&username) {
+                user
+            } else {
+                self.logger
+                    .eprintln(&format!("User \"{username}\" not found."));
+                return;
+            };
+
+            user.money.deposit(amount.val());
+
+            self.logger.println("Successfully deposited amount.");
+        }
     }
     // user_list.deposit(...)
     fn transfer(self) {
-        todo!()
+        if let Command::Transfer { from, to, amount } = self.command {
+            let user1 = self.users.get(&from);
+            let user2 = self.users.get(&to);
+            match (user1, user2) {
+                (Some(_), Some(_)) => {
+                    self.users
+                        .get_mut(&from)
+                        .unwrap()
+                        .money
+                        .withdraw(amount.val());
+
+                    self.users.get_mut(&to).unwrap().money.deposit(amount.val());
+                    self.logger.println("Sucessfully transfered amount.");
+                }
+                (None, Some(_)) => self.logger.eprintln(&format!("User \"{from}\" not found.")),
+                (Some(_), None) => self.logger.eprintln(&format!("User \"{to}\" not found.")),
+                (None, None) => self
+                    .logger
+                    .eprintln(&format!("Users \"{from}\" and \"{to}\" not found.")),
+            }
+        }
     }
     // user_list.delete(...)
     fn delete(self) {
-        todo!()
+        if let Command::Delete { username } = self.command {
+            if let Some(_) = self.users.remove(&username) {
+                self.logger.println("Successfully deleted user.");
+            } else {
+                self.logger
+                    .eprintln(&format!("User \"{username}\" not found."));
+            }
+        }
     }
     // user_list.clear(...)
     fn clear(self) {
-        todo!()
+        self.users.clear();
+        self.logger.println("Successfully cleared users.")
     }
 }
 
@@ -145,6 +196,14 @@ mod tests {
     }
     fn leak_mut_option<T>(val: T) -> OptionStatic<T> {
         OptionStatic(val)
+    }
+    // Hacky Code
+    #[derive(Clone)]
+    struct Nope;
+    impl Into<Option<&mut User>> for Nope {
+        fn into(self) -> Option<&'static mut User> {
+            None
+        }
     }
 
     #[derive(Clone)]
@@ -375,6 +434,8 @@ mod tests {
             mut logger: MockLogger,
         };
 
+        users.expect_fmt().times(2).return_const(Ok(()));
+
         logger
             .expect_println()
             .once()
@@ -410,7 +471,7 @@ mod tests {
         logger
             .expect_println()
             .once()
-            .with(eq("Sucessfully withdrew amount."))
+            .with(eq("Successfully withdrew amount."))
             .return_const(());
 
         let parser = CommandParser::new(
@@ -466,7 +527,7 @@ mod tests {
         }
 
         users
-            .expect_get()
+            .expect_get_mut()
             .once()
             .with(eq(username.clone()))
             .return_const(leak_mut_option(user));
@@ -474,7 +535,7 @@ mod tests {
         logger
             .expect_println()
             .once()
-            .with(eq("Sucessfully deposited amount."))
+            .with(eq("Successfully deposited amount."))
             .return_const(());
 
         let parser = CommandParser::new(
@@ -493,14 +554,13 @@ mod tests {
             mut logger: MockLogger,
             username = Username::build("WildSir").unwrap(),
             amount: Money,
-            user: User,
         }
 
         users
-            .expect_get()
+            .expect_get_mut()
             .once()
             .with(eq(username.clone()))
-            .return_const(leak_mut_option(user));
+            .return_const(Nope);
 
         logger
             .expect_eprintln()
@@ -532,6 +592,14 @@ mod tests {
 
         users
             .expect_get()
+            .times(2)
+            .withf(move |username: &Username| (*username == from_clone) || (*username == to_clone))
+            .return_const(leak_mut_option(user.clone()));
+
+        let (from_clone, to_clone) = (from.clone(), to.clone());
+
+        users
+            .expect_get_mut()
             .times(2)
             .withf(move |username: &Username| (*username == from_clone) || (*username == to_clone))
             .return_const(leak_mut_option(user));
@@ -567,12 +635,12 @@ mod tests {
             .expect_get()
             .times(2)
             .withf(move |username: &Username| (*username == from_clone) || (*username == to_clone))
-            .return_const(None);
+            .return_const(leak(None));
 
         logger
             .expect_eprintln()
             .once()
-            .with(eq("User \"WildSir\" and \"BigSir\" not found."))
+            .with(eq("Users \"WildSir\" and \"BigSir\" not found."))
             .return_const(());
 
         let parser = CommandParser::new(
@@ -643,7 +711,7 @@ mod tests {
         logger
             .expect_println()
             .once()
-            .with(eq("Succesfully deleted user."))
+            .with(eq("Successfully deleted user."))
             .return_const(());
 
         let parser = CommandParser::new(Command::Delete { username }, &mut users, &mut logger);
@@ -688,7 +756,7 @@ mod tests {
         logger
             .expect_println()
             .once()
-            .with(eq("Sucesfully cleared list."))
+            .with(eq("Successfully cleared users."))
             .return_const(());
 
         let parser = CommandParser::new(Command::Clear, &mut users, &mut logger);

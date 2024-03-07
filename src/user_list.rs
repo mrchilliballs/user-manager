@@ -38,7 +38,7 @@ impl UserList {
     /// Parses UserList to JSON.
     pub fn save(&self, writer: &mut impl Write) -> Result<(), io::Error> {
         let mut buf_writer = BufWriter::new(writer);
-        serde_json::to_writer(&mut buf_writer, self)?;
+        serde_json::to_writer_pretty(&mut buf_writer, self)?;
         Ok(())
     }
     /// Inserts a new entry to UserList, overwriting any entries with the same username.
@@ -155,7 +155,7 @@ mock! {
 #[cfg(test)]
 mod tests {
     use std::{
-        io::{empty, Cursor, Read},
+        io::{Cursor, Read},
         str::FromStr,
     };
 
@@ -275,11 +275,10 @@ mod tests {
         assert!(user_list.get(&removed_user.0).is_none())
     }
 
-    #[ignore]
     #[test]
     fn test_save() {
         let user_list = example_user_list();
-        let expected_contents = serde_json::to_string(&user_list).unwrap();
+        let expected_contents = serde_json::to_string_pretty(&user_list).unwrap();
         let mut cursor = Cursor::new(vec![]);
 
         user_list.save(&mut cursor).unwrap();
@@ -290,11 +289,8 @@ mod tests {
         cursor.read_to_string(&mut string).unwrap();
 
         assert_eq!(string, expected_contents);
-        // Make JSON PRETTY AND CHECK FOR THAT
-        todo!()
     }
 
-    #[ignore]
     #[test]
     fn test_load() {
         let expected_user_list = example_user_list();
@@ -304,8 +300,6 @@ mod tests {
             expected_user_list,
             UserList::load(&mut contents.as_bytes()).unwrap()
         );
-        // Make JSON PRETTY AND CHECK FOR THAT
-        todo!()
     }
 
     #[test]
