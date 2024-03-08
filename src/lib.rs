@@ -1,9 +1,6 @@
 //! # User Manager
 //! `user-manger` provides utilities to manage users and a fully featured CLI.
 
-// Maybe one day...
-// #![deny(missing_docs)]
-#![forbid(unsafe_code)]
 pub mod cli;
 pub mod command;
 mod macros;

@@ -1,12 +1,12 @@
 # User Management System
-`user-manger` provides utilities to manage users and a fully featured CLI.
+`user-manager` provides utilities to manage users and a fully featured CLI.
 
 # Usage
 ```bash
 user-manager --help
 ```
 ```
-A CLI to manage users.
+A CLI for managing users.
 
 Usage: user-manager <COMMAND>
 
@@ -26,7 +26,7 @@ Options:
 ```
 
 # Building
-You will need Rust's toolchain installed. On Unix-like OSs, you can enter the following in your terminal, and follow the instructions.
+You will need Rust's toolchain installed. On Unix-like OSes, you can enter the following in your terminal, and follow the instructions.
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
