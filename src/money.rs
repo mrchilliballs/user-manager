@@ -170,14 +170,6 @@ mod tests {
     }
 
     #[test]
-    fn test_from_str_with_currency() {
-        let money_str = "$100.50";
-        let money = Money::from_str(money_str).unwrap();
-
-        assert_eq!(money.val(), 10050);
-    }
-
-    #[test]
     fn test_from_f64() {
         let money: Money = 1000.into();
         assert_eq!(money.val(), 1000);

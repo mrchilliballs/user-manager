@@ -131,18 +131,17 @@ where
         }
     }
     fn delete(self) {
-        if let Command::Delete { username } = self.command {
-            if let Some(_) = self.users.remove(&username) {
-                let confirmation: bool;
-                if !cfg!(test) {
+        if let Command::Delete { username, force } = self.command {
+            if let Some(_) = self.users.get(&username) {
+                let mut confirmation = true;
+                if !force {
                     confirmation = Confirm::new()
                         .with_prompt("Are you sure you want to delete this user?")
                         .interact()
                         .unwrap();
-                } else {
-                    confirmation = true
                 }
                 if confirmation {
+                    self.users.remove(&username);
                     self.logger.println("Successfully deleted user.");
                 } else {
                     self.logger.println("Cancelled deleting user.");
@@ -155,15 +154,13 @@ where
     }
     // user_list.clear(...)
     fn clear(self) {
-        if let Command::Clear = self.command {
-            let confirmation: bool;
-            if !cfg!(test) {
+        if let Command::Clear { force } = self.command {
+            let mut confirmation = true;
+            if !force {
                 confirmation = Confirm::new()
                     .with_prompt("Are you sure you want to clear users?")
                     .interact()
                     .unwrap();
-            } else {
-                confirmation = true
             }
             if confirmation {
                 self.users.clear();
@@ -725,6 +722,12 @@ mod tests {
         }
 
         users
+            .expect_get()
+            .once()
+            .with(eq(username.clone()))
+            .return_const(leak_mut_option(user.clone()));
+
+        users
             .expect_remove()
             .once()
             .with(eq(username.clone()))
@@ -736,7 +739,14 @@ mod tests {
             .with(eq("Successfully deleted user."))
             .return_const(());
 
-        let parser = CommandParser::new(Command::Delete { username }, &mut users, &mut logger);
+        let parser = CommandParser::new(
+            Command::Delete {
+                username,
+                force: true,
+            },
+            &mut users,
+            &mut logger,
+        );
 
         parser.delete();
     }
@@ -750,7 +760,7 @@ mod tests {
         }
 
         users
-            .expect_remove()
+            .expect_get()
             .once()
             .with(eq(username.clone()))
             .return_const(None);
@@ -761,7 +771,14 @@ mod tests {
             .with(eq("User \"WildSir\" not found."))
             .return_const(());
 
-        let parser = CommandParser::new(Command::Delete { username }, &mut users, &mut logger);
+        let parser = CommandParser::new(
+            Command::Delete {
+                username,
+                force: true,
+            },
+            &mut users,
+            &mut logger,
+        );
 
         parser.delete();
     }
@@ -781,7 +798,7 @@ mod tests {
             .with(eq("Successfully cleared users."))
             .return_const(());
 
-        let parser = CommandParser::new(Command::Clear, &mut users, &mut logger);
+        let parser = CommandParser::new(Command::Clear { force: true }, &mut users, &mut logger);
         parser.clear()
     }
 }

@@ -8,38 +8,44 @@ pub mod logger;
 pub mod parser;
 pub use logger::Logger;
 
+/// Commands used to manage a `UserList`, parsed with `CommandParser`.
 #[derive(Debug, Subcommand, PartialEq, Clone)]
 pub enum Command {
+    /// Adds a new user, replacing any existing user with the same username
     Insert {
         username: Username,
         #[command(flatten)]
         user: User,
     },
+    /// Modify fields for an existing user
     Edit {
         username: Username,
         #[command(flatten)]
         user: OptionalUser,
     },
-    Get {
-        username: Option<Username>,
-    },
-    Withdraw {
-        username: Username,
-        amount: Money,
-    },
-    Deposit {
-        username: Username,
-        amount: Money,
-    },
+    /// Display the fields of a specific user or list all users if none is specified
+    Get { username: Option<Username> },
+    /// Deduct the specified amount from a user's account
+    Withdraw { username: Username, amount: Money },
+    /// Credit the specified amount to a user's account
+    Deposit { username: Username, amount: Money },
+    /// Move funds between two user accounts
     Transfer {
         from: Username,
         to: Username,
         amount: Money,
     },
-    // Confirmation required
+    /// Permanently remove a user
     Delete {
         username: Username,
+        /// Do not ask for confirmation
+        #[arg(short, long)]
+        force: bool,
     },
-    // Confirmation required
-    Clear,
+    /// Permanently remove all users
+    Clear {
+        /// Do not ask for confirmation
+        #[arg(short, long)]
+        force: bool,
+    },
 }
