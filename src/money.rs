@@ -45,10 +45,9 @@ impl From<i64> for Money {
 
 impl FromStr for Money {
     type Err = ParseFloatError;
-    // Input may start with a dollar sign ($), and the value should be formatted as float.
+    // Input may not start with a dollar sign ($), and the value should be formatted as float.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let amount_str = if s.starts_with("$") { &s[1..] } else { s };
-        Ok(Money::from((amount_str.parse::<f64>()? * 100.0) as i64))
+        Ok(Money::from((s.parse::<f64>()? * 100.0) as i64))
     }
 }
 

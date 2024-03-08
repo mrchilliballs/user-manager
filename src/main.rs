@@ -5,9 +5,7 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use console::Term;
-use user_manager::{cli::Cli, UserList};
-
+use user_manager::{cli::Cli, command::logger::DefaultLogger, UserList};
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let file_outer = File::open("users.json");
@@ -31,8 +29,8 @@ fn main() -> Result<()> {
             }
         }
     };
-    let term = Term::stdout();
-    cli.parse_command(&mut users, &term);
+    let logger = DefaultLogger;
+    cli.parse_command(&mut users, &logger);
 
     let mut file = File::create("users.json").unwrap();
     users.save(&mut file)?;

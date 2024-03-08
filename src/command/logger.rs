@@ -1,17 +1,20 @@
-use std::io::{BufWriter, Write};
-
-use console::Term;
 #[cfg(test)]
 use mockall::mock;
 
+/// Used to specify logging behavior. Not only does this allow you to keep track of logs, but also use custom loggers from other crates.
 pub trait Logger {
+    /// Print the specefied sring
     fn print(&self, value: &str);
+    /// Print the specified string to stderr; by default will use `print`
     fn eprint(&self, value: &str) {
-        self.print(value)
+        self.print(value);
     }
+    /// Same as `eprint`, with a new line appended
     fn eprintln(&self, value: &str) {
-        self.println(value)
+        self.println(value);
+        self.println("\n");
     }
+    /// Same as `print`, with a new line appended
     fn println(&self, value: &str) {
         self.print(value);
         self.print("\n");
@@ -33,12 +36,15 @@ mock! {
     }
 }
 
-// TODO: TESTS
-impl Logger for Term {
+/// Default logger using std macros
+pub struct DefaultLogger;
+impl Logger for DefaultLogger {
+    /// Uses default `print` macro
     fn print(&self, value: &str) {
-        let mut buf_writer = BufWriter::new(self);
-        buf_writer
-            .write_all(value.as_bytes())
-            .expect("Failed to write to terminal");
+        print!("{value}")
+    }
+    /// Uses default `eprint` macro
+    fn eprint(&self, value: &str) {
+        eprint!("{value}")
     }
 }

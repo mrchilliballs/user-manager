@@ -3,6 +3,9 @@ use crate::command::Command;
 #[mockall_double::double]
 use crate::user_list::UserList;
 
+use dialoguer::Confirm;
+
+/// Parses commands, and runs required methods in users. Intended for end user usage, since it will log helpful output.
 #[derive(Debug, PartialEq)]
 pub struct CommandParser<'a, T>
 where
@@ -17,18 +20,15 @@ impl<'a, T> CommandParser<'a, T>
 where
     T: Logger,
 {
-    pub fn new(
-        command: Command,
-        users: &'a mut UserList,
-        logger: &'a T,
-        // Normally a file
-    ) -> Self {
+    /// Creates a new CommandParser with the provided values.
+    pub fn new(command: Command, users: &'a mut UserList, logger: &'a T) -> Self {
         CommandParser {
             command,
             users,
             logger,
         }
     }
+    /// Runs the appropiate logic for each Command.
     pub fn parse(self) {
         match self.command {
             Command::Insert { .. } => self.insert(),
@@ -41,14 +41,12 @@ where
             Command::Clear { .. } => self.clear(),
         }
     }
-    // user_list.insert(...)
-    pub fn insert(self) {
+    fn insert(self) {
         if let Command::Insert { username, user } = self.command {
             self.users.insert(username, user);
             self.logger.println("Sucessfully inserted user.");
         }
     }
-    // user_list.get_mut(...)
     fn edit(self) {
         if let Command::Edit { username, user } = self.command {
             let original_user = if let Some(user) = self.users.get(&username) {
@@ -65,7 +63,6 @@ where
             self.logger.println("Sucessfully edited user.")
         }
     }
-    // user_list.get(...)
     fn get(self) {
         if let Command::Get { username } = self.command {
             if let Some(username) = username {
@@ -80,7 +77,6 @@ where
             }
         }
     }
-    // user_list.get(...)
     fn withdraw(self) {
         if let Command::Withdraw { username, amount } = self.command {
             let user = if let Some(user) = self.users.get_mut(&username) {
@@ -96,7 +92,6 @@ where
             self.logger.println("Successfully withdrew amount.");
         }
     }
-    // user_list.deposit(...)
     fn deposit(self) {
         if let Command::Deposit { username, amount } = self.command {
             let user = if let Some(user) = self.users.get_mut(&username) {
@@ -112,7 +107,6 @@ where
             self.logger.println("Successfully deposited amount.");
         }
     }
-    // user_list.deposit(...)
     fn transfer(self) {
         if let Command::Transfer { from, to, amount } = self.command {
             let user1 = self.users.get(&from);
@@ -136,11 +130,23 @@ where
             }
         }
     }
-    // user_list.delete(...)
     fn delete(self) {
         if let Command::Delete { username } = self.command {
             if let Some(_) = self.users.remove(&username) {
-                self.logger.println("Successfully deleted user.");
+                let confirmation: bool;
+                if !cfg!(test) {
+                    confirmation = Confirm::new()
+                        .with_prompt("Are you sure you want to delete this user?")
+                        .interact()
+                        .unwrap();
+                } else {
+                    confirmation = true
+                }
+                if confirmation {
+                    self.logger.println("Successfully deleted user.");
+                } else {
+                    self.logger.println("Cancelled deleting user.");
+                }
             } else {
                 self.logger
                     .eprintln(&format!("User \"{username}\" not found."));
@@ -149,8 +155,23 @@ where
     }
     // user_list.clear(...)
     fn clear(self) {
-        self.users.clear();
-        self.logger.println("Successfully cleared users.")
+        if let Command::Clear = self.command {
+            let confirmation: bool;
+            if !cfg!(test) {
+                confirmation = Confirm::new()
+                    .with_prompt("Are you sure you want to clear users?")
+                    .interact()
+                    .unwrap();
+            } else {
+                confirmation = true
+            }
+            if confirmation {
+                self.users.clear();
+                self.logger.println("Successfully cleared users.")
+            } else {
+                self.logger.println("Cancelled clearing users.")
+            }
+        }
     }
 }
 
@@ -197,6 +218,7 @@ mod tests {
     fn leak_mut_option<T>(val: T) -> OptionStatic<T> {
         OptionStatic(val)
     }
+
     // Hacky Code
     #[derive(Clone)]
     struct Nope;
@@ -554,7 +576,7 @@ mod tests {
             mut logger: MockLogger,
             username = Username::build("WildSir").unwrap(),
             amount: Money,
-        }
+        };
 
         users
             .expect_get_mut()

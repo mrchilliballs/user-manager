@@ -3,7 +3,7 @@
 
 // Maybe one day...
 // #![deny(missing_docs)]
-// #![forbid(unsafe_code)]
+#![forbid(unsafe_code)]
 pub mod cli;
 pub mod command;
 mod macros;

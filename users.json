@@ -1,1 +1,8 @@
-{"users":{"lauren":{"name":"yes","money":1.0},"matheus":{"name":"cool","money":1.0}}}
+{
+  "users": {
+    "matheus2": {
+      "name": "Matheus",
+      "money": 59
+    }
+  }
+}
